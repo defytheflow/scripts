@@ -1,0 +1,124 @@
+#!/bin/bash
+
+SCRIPT_NAME="clean"
+
+usage() {
+
+    echo -e "Removes executable files from directory.\n"
+    echo "Usage:"
+    echo -e "  clean [-b] [-h] [-s] <dir> [dir...]\n"
+    echo "Arguments:"
+    echo "  dir    name of the directory"
+    echo ""
+    echo "Options:"
+    echo "  -e     remove executable ELF files (default)"
+    echo "  -h     display a usage message"
+    echo "  -s     remove executable scripts"
+    echo ""
+    echo "Examples:"
+    echo "  clean         removes all executable ELFs from current directory"
+    echo "  clean -s dir  removes all executable scripts from 'dir' directory"
+    echo ""
+    echo "Author:"
+    echo -e "  Artyom Danilov\n"
+
+}
+
+# -e
+ELF_FLAG=0
+ELFS=()
+# -s
+SCRIPT_FLAG=0
+SCRIPTS=()
+
+while getopts ":ehs" opt; do
+    case $opt in
+        e)
+            ELF_FLAG=1 ;;
+        h)
+            usage
+            exit 0 ;;
+        s)
+            SCRIPT_FLAG=1 ;;
+        \?)
+            usage
+            echoerr "Error: unknown option '$OPTARG'"
+            exit 1 ;;
+    esac
+done
+
+# Remove options from $@
+shift $(( OPTIND - 1 ))
+
+# Default flag
+if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 0 ]]; then
+    ELF_FLAG=1
+fi
+
+# If no <dir> argument was given, then scan pwd
+if [[ $# -eq 0 ]]; then
+
+    for file in $(ls); do
+        # If file is executable and not named like this script
+        if [[ -x $file && $file != $SCRIPT_NAME ]]; then
+
+            # If file type is ELF
+            if [[ $(file $file) =~ "ELF" ]]; then
+                ELFS+=("$file")
+            # If file type is some type of script
+            elif [[ $(file $file) =~ "script" ]]; then
+                SCRIPTS+=("$file")
+            fi
+
+        fi
+    done
+
+# If <dir> arguments are given
+else
+
+    for dir in $@; do
+        if [[ -d $dir ]]; then
+
+            for file in $(ls $dir); do
+                # If file is executable and not named like this script
+                if [[ -x $dir/$file && $dir/$file != $SCRIPT_NAME ]]; then
+                    # If file type is ELF
+                    if [[ $(file $dir/$file) =~ "ELF" ]]; then
+                        ELFS+=("$dir/$file")
+                    # If file type is some type of script
+                    elif [[ $(file $dir/$file) =~ "script" ]]; then
+                        SCRIPTS+=("$dir/$file")
+                    fi
+                fi
+
+            done
+
+        fi
+    done
+
+fi
+
+if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 1 ]]; then
+    FILES_TO_REMOVE=("${SCRIPTS[@]}")
+elif [[ $ELF_FLAG -eq 1 && $SCRIPT_FLAG -eq 0 ]]; then
+    FILES_TO_REMOVE=("${ELFS[@]}")
+else
+    FILES_TO_REMOVE=("${ELFS[@]}" "${SCRIPTS[@]}")
+fi
+
+if [[ ${#FILES_TO_REMOVE} -gt 0 ]]; then
+
+    for file in ${FILES_TO_REMOVE[@]}; do
+        echo -n "'$file' "
+    done
+    echo ""
+
+    echo -n "Remove these files? [y/n]: "
+    read ans
+    if [[ "$ans" =~ ^[yY][eE]?[sS]?$ ]]; then
+        for file in ${FILES_TO_REMOVE[@]}; do
+            rm $file
+        done
+    fi
+fi
+
