@@ -1,0 +1,130 @@
+#!/bin/bash
+
+usage() {
+    echo -e "Creates default files.\n"
+    echo "Usage:"
+    echo -e "  new [-h] <filename>\n"
+    echo "Arguments:"
+    echo "  filename    name of the file to create"
+    echo ""
+    echo "Options:"
+    echo "  -h           displays a usage message"
+    echo ""
+}
+
+# You must put your templates inside this directory,
+# 'new' looks them up and copies from there.
+TEMPLATES=$HOME/.templates
+
+# Copies $1 template from $TEMPLATES directory into $2 file
+copy_template() {
+    # $1 - name of template, $2 - name of new file
+
+    if [[ ! -f $(pwd)/$2 ]]; then
+
+        if [[ ! -f $TEMPLATES/$1 ]]; then
+            echoerr "Error: template not found '$TEMPLATES/$1'"
+        else
+            cp $TEMPLATES/$1 $2
+        fi
+
+    else
+
+        echo "Warning: file already exists '$2'"
+        echo -n "Rewrite ? [y/n]: "
+        read ans
+        if isyes $ans; then
+            cp $TEMPLATES/$1 $2
+        fi
+
+    fi
+
+}
+
+# Check that $TEMPLATES_DIR exists
+if [[ ! -d $TEMPLATES ]]; then
+    echoerr "Error: unable to find '$TEMPLATES' directory"
+    echoerr "Fix: create '$TEMPLATES' directory"
+    exit 1
+fi
+
+# Parse options
+while getopts ":h" opt; do
+    case $opt in
+        h)
+            usage
+            exit 0 ;;
+        \?)
+            usage
+            echoerr "Error: unknown option '$OPTARG'"
+            exit 1 ;;
+    esac
+done
+
+# Remove parsed options from arguments array ($@)
+shift $(( OPTIND - 1 ))
+
+# Check if <filename> argument was given
+if [[ $# -lt 1 ]]; then
+    usage
+    echoerr "Error: missing <filename> argument"
+    exit 1
+fi
+
+# For each <filename> argument
+for filename in $@; do
+
+    # Extract the root part of filename
+    root=${filename%.*}
+    # Extract the extension of filename
+    ext=${filename#$root}
+
+    # If no extension
+    if [[ -z $ext ]]; then
+
+        case $root in
+            c-makefile)
+                copy_template "c-makefile"   $filename
+                ;;
+            cpp-makefile)
+                copy_template "cpp-makefile" $filename
+                ;;
+            lesson-plan)
+                copy_template "lesson-plan"  $filename
+                ;;
+            *)
+                touch $filename
+                ;;
+        esac
+
+    else
+
+        case $ext in
+            .asm)
+                copy_template "asm"  $filename
+                ;;
+            .c)
+                copy_template "c"    $filename
+                ;;
+            .cpp)
+                copy_template "cpp"  $filename
+                ;;
+            .html)
+                copy_template "html" $filename
+                ;;
+            .py)
+                copy_template "py"   $filename
+                ;;
+            .s)
+                copy_template "s"    $filename
+                ;;
+            .sh)
+                copy_template "sh"   $filename
+                ;;
+            *)
+                touch $filename
+                ;;
+        esac
+
+    fi
+done

@@ -1,0 +1,6 @@
+# Generic C++ Makefile 
+
+CPP_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c++17
+
+%: %.cpp
+	g++ $^ $(CPP_FLAGS) -o $@
