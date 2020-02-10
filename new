@@ -1,20 +1,37 @@
 #!/bin/bash
 
 usage() {
-    echo -e "Creates default files.\n"
+    echo -e "Creates default templates for source-code files.\n"
     echo "Usage:"
-    echo -e "  new [-h] <filename>\n"
+    echo -e "  new [option] <filename>\n"
     echo "Arguments:"
     echo "  filename    name of the file to create"
     echo ""
     echo "Options:"
+    echo "  -e           open <filename> for editing in vim"
     echo "  -h           displays a usage message"
     echo ""
 }
 
+# Options:
+
+# -e
+EDIT_FLAG=0
+
 # You must put your templates inside this directory,
 # 'new' looks them up and copies from there.
 TEMPLATES=$HOME/.templates
+
+# Line number where cursor should appear if -e flag is on
+declare -A CURSOR_LINE_NUMBERS=(
+    ["c"]="6"
+    ["cpp"]="8"
+    ["html"]="8"
+    ["py"]="5"
+    ["sh"]="3"
+)
+
+HELP_MESSAGE="Try: 'new -h' for more information"
 
 # Copies $1 template from $TEMPLATES directory into $2 file
 copy_template() {
@@ -33,7 +50,7 @@ copy_template() {
         echo "Warning: file already exists '$2'"
         echo -n "Rewrite ? [y/n]: "
         read ans
-        if isyes $ans; then
+        if [[ "$ans" =~ ^[yY]$ ]]; then
             cp $TEMPLATES/$1 $2
         fi
 
@@ -49,14 +66,16 @@ if [[ ! -d $TEMPLATES ]]; then
 fi
 
 # Parse options
-while getopts ":h" opt; do
+while getopts ":eh" opt; do
     case $opt in
         h)
             usage
             exit 0 ;;
+        e)
+            EDIT_FLAG=1 ;;
         \?)
-            usage
             echoerr "Error: unknown option '$OPTARG'"
+            echoerr $HELP_MESSAGE
             exit 1 ;;
     esac
 done
@@ -66,8 +85,8 @@ shift $(( OPTIND - 1 ))
 
 # Check if <filename> argument was given
 if [[ $# -lt 1 ]]; then
-    usage
     echoerr "Error: missing <filename> argument"
+    echoerr $HELP_MESSAGE
     exit 1
 fi
 
@@ -78,19 +97,14 @@ for filename in $@; do
     root=${filename%.*}
     # Extract the extension of filename
     ext=${filename#$root}
+    ext=${ext:1}  # remove leading '.'
 
     # If no extension
     if [[ -z $ext ]]; then
 
         case $root in
-            c-makefile)
-                copy_template "c-makefile"   $filename
-                ;;
-            cpp-makefile)
-                copy_template "cpp-makefile" $filename
-                ;;
-            lesson-plan)
-                copy_template "lesson-plan"  $filename
+            c-makefile | cpp-makefile | lesson-plan)
+                copy_template $root  $filename
                 ;;
             *)
                 touch $filename
@@ -100,26 +114,8 @@ for filename in $@; do
     else
 
         case $ext in
-            .asm)
-                copy_template "asm"  $filename
-                ;;
-            .c)
-                copy_template "c"    $filename
-                ;;
-            .cpp)
-                copy_template "cpp"  $filename
-                ;;
-            .html)
-                copy_template "html" $filename
-                ;;
-            .py)
-                copy_template "py"   $filename
-                ;;
-            .s)
-                copy_template "s"    $filename
-                ;;
-            .sh)
-                copy_template "sh"   $filename
+            asm | c | cpp | html | py | s | sh)
+                copy_template $ext  $filename
                 ;;
             *)
                 touch $filename
@@ -127,4 +123,9 @@ for filename in $@; do
         esac
 
     fi
+
+    if [[ $EDIT_FLAG -eq 1 ]]; then
+        vim -c 'startinsert' $filename "+${CURSOR_LINE_NUMBERS[$ext]}"
+    fi
+
 done

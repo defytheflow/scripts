@@ -34,6 +34,8 @@ FORCE_FLAG=0
 SCRIPT_FLAG=0
 SCRIPTS=()
 
+HELP_MESSAGE="Try: 'clean -h' for more information"
+
 while getopts ":efhs" opt; do
     case $opt in
         e)
@@ -46,8 +48,8 @@ while getopts ":efhs" opt; do
         s)
             SCRIPT_FLAG=1 ;;
         \?)
-            usage
             echoerr "Error: unknown option '$OPTARG'"
+            echoerr $HELP_MESSAGE
             exit 1 ;;
     esac
 done
