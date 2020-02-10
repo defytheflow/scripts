@@ -55,6 +55,8 @@ if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 0 ]]; then
     ELF_FLAG=1
 fi
 
+# Collect all the scripts and elfs into arrays $SCRIPTS, $ELFS
+
 # If no <dir> argument was given, then scan pwd
 if [[ $# -eq 0 ]]; then
 
@@ -65,9 +67,11 @@ if [[ $# -eq 0 ]]; then
             # If file type is ELF
             if [[ $(file $file) =~ "ELF" ]]; then
                 ELFS+=("$file")
+
             # If file type is some type of script
             elif [[ $(file $file) =~ "script" ]]; then
                 SCRIPTS+=("$file")
+
             fi
 
         fi
@@ -82,12 +86,15 @@ else
             for file in $(ls $dir); do
                 # If file is executable and not named like this script
                 if [[ -x $dir/$file && $dir/$file != $SCRIPT_NAME ]]; then
+
                     # If file type is ELF
                     if [[ $(file $dir/$file) =~ "ELF" ]]; then
                         ELFS+=("$dir/$file")
+
                     # If file type is some type of script
                     elif [[ $(file $dir/$file) =~ "script" ]]; then
                         SCRIPTS+=("$dir/$file")
+
                     fi
                 fi
 
@@ -98,6 +105,7 @@ else
 
 fi
 
+# Collect files to be removed into $FILES_TO_REMOVE array
 if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 1 ]]; then
     FILES_TO_REMOVE=("${SCRIPTS[@]}")
 elif [[ $ELF_FLAG -eq 1 && $SCRIPT_FLAG -eq 0 ]]; then
@@ -106,16 +114,21 @@ else
     FILES_TO_REMOVE=("${ELFS[@]}" "${SCRIPTS[@]}")
 fi
 
-if [[ ${#FILES_TO_REMOVE} -gt 0 ]]; then
+# Prompt to remove each file from $FILES_TO_REMOVE array
+if [[ ${#FILES_TO_REMOVE[@]} -gt 0 ]]; then
 
     for file in ${FILES_TO_REMOVE[@]}; do
-        echo -n "'$file' "
+        echo "'$file' "
     done
-    echo ""
 
-    echo -n "Remove these files? [y/n]: "
+    if [[ ${#FILES_TO_REMOVE[@]} -eq 1 ]]; then
+        echo -n "Remove this file? [y/n]: "
+    else
+        echo -n "Remove these files? [y/n]: "
+    fi
+
     read ans
-    if [[ "$ans" =~ ^[yY][eE]?[sS]?$ ]]; then
+    if [[ "$ans" =~ ^[yY]$ ]]; then
         for file in ${FILES_TO_REMOVE[@]}; do
             rm $file
         done
