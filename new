@@ -3,20 +3,23 @@
 usage() {
     echo -e "Creates default templates for source-code files.\n"
     echo "Usage:"
-    echo -e "  new [option] <filename>\n"
+    echo -e "  new [options] <file>...\n"
     echo "Arguments:"
-    echo "  filename    name of the file to create"
+    echo "  file          name of the file to create"
     echo ""
     echo "Options:"
-    echo "  -e           open <filename> for editing in vim"
-    echo "  -h           displays a usage message"
+    echo "  -e, --edit                  open <file> for editing in vim"
+    echo "  -h, --help                  displays a usage message"
+    echo "  -m <lang>, --make <lang>    generates a default makefile for <lang>"
     echo ""
 }
 
-# Options:
+HELP_MESSAGE="Try: 'new -h | --help' for more information"
 
-# -e
-EDIT_FLAG=0
+declare -A FLAGS=(
+    [edit]=0
+    [make]=""
+)
 
 # You must put your templates inside this directory,
 # 'new' looks them up and copies from there.
@@ -31,7 +34,19 @@ declare -A CURSOR_LINE_NUMBERS=(
     ["sh"]="3"
 )
 
-HELP_MESSAGE="Try: 'new -h' for more information"
+SUPPORTED_MAKEFILES=(c cpp)
+
+# Returns 0 if $1 is in $MAKEFILES
+makefile_supported() {
+
+    for lang in ${SUPPORTED_MAKEFILES[@]}; do
+        if [[ "$lang" == "$1" ]]; then
+            return 0
+        fi
+    done
+    return 1
+
+}
 
 # Copies $1 template from $TEMPLATES directory into $2 file
 copy_template() {
@@ -66,66 +81,79 @@ if [[ ! -d $TEMPLATES ]]; then
 fi
 
 # Parse options
-while getopts ":eh" opt; do
-    case $opt in
-        h)
-            usage
-            exit 0 ;;
-        e)
-            EDIT_FLAG=1 ;;
-        \?)
-            echoerr "Error: unknown option '$OPTARG'"
-            echoerr $HELP_MESSAGE
-            exit 1 ;;
-    esac
-done
+short_options="ehm:"
+long_options="edit,help,make:"
 
-# Remove parsed options from arguments array ($@)
-shift $(( OPTIND - 1 ))
+options=$(getopt -o $short_options -l $long_options -- "$@")
 
-# Check if <filename> argument was given
-if [[ $# -lt 1 ]]; then
-    echoerr "Error: missing <filename> argument"
+if [[ $? -ne 0 ]]; then
     echoerr $HELP_MESSAGE
     exit 1
 fi
 
-# For each <filename> argument
-for filename in $@; do
+eval set -- "$options"  # sets $options as script arguments
 
-    # Extract the root part of filename
-    root=${filename%.*}
-    # Extract the extension of filename
-    ext=${filename#$root}
+# Set options
+while true; do
+    case $1 in
+        -e | --edit)
+            FLAGS[edit]=1   ;;
+        -h | --help)
+            usage
+            exit 0          ;;
+        -m | --make)
+            shift
+            if ! makefile_supported $1; then
+                echoerr "Error: '$1' makefile is not supported."
+                echoerr "Supported makefiles: ${SUPPORTED_MAKEFILES[@]}"
+                echoerr $HELP_MESSAGE
+                exit 1
+            fi
+            FLAGS[make]=$1 ;;
+        --)
+            shift
+            break          ;;
+    esac
+    shift
+done
+
+# Check if <file> argument was given
+if [[ $# -lt 1 ]]; then
+    echoerr "Error: missing <file> argument"
+    echoerr $HELP_MESSAGE
+    exit 1
+fi
+
+if [[ -n ${FLAGS[make]} ]]; then
+    copy_template ${FLAGS[make]}-makefile $1
+    shift
+fi
+
+# For each <file> argument
+for file in $@; do
+
+    # Extract the root part of file
+    root=${file%.*}
+    # Extract the extension of file
+    ext=${file#$root}
     ext=${ext:1}  # remove leading '.'
 
     # If no extension
     if [[ -z $ext ]]; then
-
-        case $root in
-            c-makefile | cpp-makefile | lesson-plan)
-                copy_template $root  $filename
-                ;;
-            *)
-                touch $filename
-                ;;
-        esac
-
+        touch $file
     else
-
         case $ext in
             asm | c | cpp | html | py | s | sh)
-                copy_template $ext  $filename
+                copy_template $ext  $file
                 ;;
             *)
-                touch $filename
+                touch $file
                 ;;
         esac
-
     fi
 
-    if [[ $EDIT_FLAG -eq 1 ]]; then
-        vim -c 'startinsert' $filename "+${CURSOR_LINE_NUMBERS[$ext]}"
+    if [[ ${FLAGS[edit]} -eq 1 ]]; then
+        vim -c 'startinsert' $file "+${CURSOR_LINE_NUMBERS[$ext]}"
     fi
 
 done
