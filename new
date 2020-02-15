@@ -23,7 +23,7 @@ declare -A FLAGS=(
 
 # You must put your templates inside this directory,
 # 'new' looks them up and copies from there.
-TEMPLATES=$HOME/.templates
+TEMPLATES=/usr/share/templates/
 
 # Line number where cursor should appear if -e flag is on
 declare -A CURSOR_LINE_NUMBERS=(
