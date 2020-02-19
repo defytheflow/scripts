@@ -1,40 +1,67 @@
 #!/bin/bash
 
-usage() {
-    echo -e "Creates default templates for source-code files.\n"
+# TODO - first creates lessons, then makefiles
+#        implement options that take 2 arguments somehow :)
+
+usage()
+{
+    echo -e "Creates default templates for files.\n"
     echo "Usage:"
     echo -e "  new [options] <file>...\n"
     echo "Arguments:"
-    echo "  file          name of the file to create"
+    echo "  file                        name of the file to create."
+    echo "  lang                        c, cpp"
     echo ""
     echo "Options:"
-    echo "  -e, --edit                  open <file> for editing in vim"
-    echo "  -h, --help                  displays a usage message"
-    echo "  -m <lang>, --make <lang>    generates a default makefile for <lang>"
+    echo "  -e, --edit                  open <file> for editing in vim."
+    echo "  -f, --force                 disables warnings."
+    echo "  -h, --help                  displays a usage message."
+    echo "  -l, --lesson                generates a default lesson plan."
+    echo "  -m <lang>, --make <lang>    generates a default makefile for <lang>."
     echo ""
+    echo "Examples:"
+    echo "  new hello                   just creates a file 'hello'"
+    echo "  new hello.c                 creates a default C template."
+    echo "  new hello.c hello.py        creates C and Python default templates."
+    echo "  new -m c Make               creates a defaut  C makefile."
+    echo "  new --make=cpp Makefile     creates a default C++ makefile."
+    echo "  new -e file                 creates 'file' and opens in vim"
+    echo "  new --edit hello.py         creates a default Python template and"
+    echo "                              opens it for editing in vim."
+    echo ""
+    echo "Author:"
+    echo -e "  Artyom Danilov\n"
 }
+
+## GLOBAL VARIABLES
+
+# Default templates must reside in this directory.
+TEMPLATES="/usr/share/templates/"
+
+SUPPORTED_MAKEFILES=(c cpp)
 
 HELP_MESSAGE="Try: 'new -h | --help' for more information"
 
 declare -A FLAGS=(
-    [edit]=0
-    [make]=""
+
+    [edit]=0    # -e, --edit
+    [force]=0   # -f, --force
+    [lesson]=0  # -l, --lesson
+    [make]=""   # -m, --make
+
 )
 
-# You must put your templates inside this directory,
-# 'new' looks them up and copies from there.
-TEMPLATES=/usr/share/templates/
-
-# Line number where cursor should appear if -e flag is on
+# Line numbers where cursor should appear if --edit flag is on
 declare -A CURSOR_LINE_NUMBERS=(
-    ["c"]="6"
-    ["cpp"]="8"
-    ["html"]="8"
-    ["py"]="5"
-    ["sh"]="3"
+
+    ["c"]=6
+    ["cpp"]=8
+    ["html"]=8
+    ["py"]=5
+
 )
 
-SUPPORTED_MAKEFILES=(c cpp)
+## FUNCTION DECLARATIONS
 
 # Returns 0 if $1 is in $MAKEFILES
 makefile_supported() {
@@ -50,39 +77,45 @@ makefile_supported() {
 
 # Copies $1 template from $TEMPLATES directory into $2 file
 copy_template() {
-    # $1 - name of template, $2 - name of new file
 
-    if [[ ! -f $(pwd)/$2 ]]; then
+    local template="$TEMPLATES/$1"
+    local file=$2
 
-        if [[ ! -f $TEMPLATES/$1 ]]; then
-            echoerr "Error: template not found '$TEMPLATES/$1'"
+    if [[ ! -f $(pwd)/$file ]]; then
+
+        if [[ ! -f $template ]]; then
+            echoerr "Error: template not found '$template'"
         else
-            cp $TEMPLATES/$1 $2
+            cp $template $file
         fi
 
     else
 
-        echo "Warning: file already exists '$2'"
-        echo -n "Rewrite ? [y/n]: "
-        read ans
-        if [[ "$ans" =~ ^[yY]$ ]]; then
-            cp $TEMPLATES/$1 $2
+        if [[ ${FLAGS[force]} -eq 1 ]]; then
+            cp $template $file
+        else
+            echo "Warning: file already exists '$file'"
+            read -ep "Rewrite ? [y/n]: " ans
+            [[ "$ans" =~ ^[yY]$ ]] && cp $template $file
         fi
 
     fi
 
 }
 
-# Check that $TEMPLATES_DIR exists
+## VALIDATION
+
+# Check that $TEMPLATES directory exists
 if [[ ! -d $TEMPLATES ]]; then
     echoerr "Error: unable to find '$TEMPLATES' directory"
-    echoerr "Fix: create '$TEMPLATES' directory"
+    echoerr "Fix: create '$TEMPLATES' directory and fill it with your templates"
     exit 1
 fi
 
-# Parse options
-short_options="ehm:"
-long_options="edit,help,make:"
+## PARSE OPTIONS
+
+short_options="efhlm:"
+long_options="edit,force,help,lesson,make:"
 
 options=$(getopt -o $short_options -l $long_options -- "$@")
 
@@ -93,14 +126,18 @@ fi
 
 eval set -- "$options"  # sets $options as script arguments
 
-# Set options
+## SET UP OPTIONS
 while true; do
     case $1 in
         -e | --edit)
             FLAGS[edit]=1   ;;
+        -f | --force)
+            FLAGS[force]=1  ;;
         -h | --help)
             usage
             exit 0          ;;
+        -l | --lesson)
+            FLAGS[lesson]=1 ;;
         -m | --make)
             shift
             if ! makefile_supported $1; then
@@ -117,6 +154,8 @@ while true; do
     shift
 done
 
+## VALIDATION
+
 # Check if <file> argument was given
 if [[ $# -lt 1 ]]; then
     echoerr "Error: missing <file> argument"
@@ -124,24 +163,33 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-if [[ -n ${FLAGS[make]} ]]; then
+## MAIN JOB
+
+# First create lessons
+if [[ ${FLAGS[lesson]} -eq 1 ]]; then
+    copy_template lesson-plan $1
+    shift
+fi
+
+# Create Makefiles
+if [[ $# -gt 0 && -n ${FLAGS[make]} ]]; then
     copy_template ${FLAGS[make]}-makefile $1
     shift
 fi
 
-# For each <file> argument
-for file in $@; do
+# If still have files to create
+if [[ $# -gt 0 ]]; then
 
-    # Extract the root part of file
-    root=${file%.*}
-    # Extract the extension of file
-    ext=${file#$root}
-    ext=${ext:1}  # remove leading '.'
+    # For each <file> argument
+    for file in $@; do
 
-    # If no extension
-    if [[ -z $ext ]]; then
-        touch $file
-    else
+        # Extract the root part of file
+        root=${file%.*}
+
+        # Extract the extension of file
+        ext=${file#$root}
+        ext=${ext:1}  # remove leading '.'
+
         case $ext in
             asm | c | cpp | html | py | s | sh)
                 copy_template $ext  $file
@@ -150,10 +198,14 @@ for file in $@; do
                 touch $file
                 ;;
         esac
-    fi
 
+    done
+
+    # Open the first file after Makefile for editing
     if [[ ${FLAGS[edit]} -eq 1 ]]; then
-        vim -c 'startinsert' $file "+${CURSOR_LINE_NUMBERS[$ext]}"
+        vim -c 'startinsert' $1 "+${CURSOR_LINE_NUMBERS[$ext]}"
     fi
 
-done
+fi
+
+exit 0
