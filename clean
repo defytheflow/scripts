@@ -1,52 +1,103 @@
 #!/bin/bash
 
-SCRIPT_NAME="clean"
-
-usage() {
-
+usage()
+{
     echo -e "Removes executable files from directory.\n"
     echo "Usage:"
-    echo -e "  clean [option] <dir> [dir...]\n"
+    echo -e "  clean [options] <dir>...\n"
     echo "Arguments:"
     echo "  dir    name of the directory"
     echo ""
     echo "Options:"
-    echo "  -e     remove executable ELF files (default)"
+    echo "  -e     remove executable ELF files     (default)"
     echo "  -f     remove without prompt"
     echo "  -h     display a usage message"
+    echo "  -o     remove non-executable ELF files (default)"
     echo "  -s     remove executable scripts"
     echo ""
     echo "Examples:"
-    echo "  clean         removes all executable ELFs from current directory"
-    echo "  clean -s dir  removes all executable scripts from 'dir' directory"
+    echo "  clean         removes all ELFs from cwd"
+    echo "  clean -e dir  removes executable ELF's from 'dir'"
+    echo "  clean -o .    removes non-executable ELF's from cwd"
+    echo "  clean -s dir  removes all executable scripts from 'dir'"
     echo ""
     echo "Author:"
     echo -e "  Artyom Danilov\n"
-
 }
 
-# -e
-ELF_FLAG=0
-ELFS=()
-# -f
-FORCE_FLAG=0
-# -s
-SCRIPT_FLAG=0
+## GLOBAL VARIABLES
+
+declare -A FLAGS=(
+
+    [exec_elf]=0  # -e
+    [default]=1
+    [force]=0     # -f
+    [obj_elf]=0   # -o
+    [script]=0    # -s
+
+)
+
+EXEC_ELFS=()
+OBJ_ELFS=()
 SCRIPTS=()
 
 HELP_MESSAGE="Try: 'clean -h' for more information"
 
-while getopts ":efhs" opt; do
+## FUNCTION DECLARATIONS
+
+collect_files()
+{
+    local dir=$1
+
+    for file in $(ls $dir); do
+        # If $dir/$file is executable
+        if [[ -x $dir/$file ]]; then
+
+            # If $dir/$file is ELF
+            if [[ $(file $dir/$file) =~ "ELF" ]]; then
+                EXEC_ELFS+=("$dir/$file")
+
+            # If file is script
+            elif [[ $(file $dir/$file) =~ "script" ]]; then
+                SCRIPTS+=("$dir/$file")
+
+            fi
+
+        else
+            if [[ $(file $dir/$file) =~ "ELF" ]]; then
+                OBJ_ELFS+=("$dir/$file")
+            fi
+        fi
+    done
+}
+
+remove_files()
+{
+    for file in ${TRASH[@]}; do
+        rm $file
+    done
+}
+
+
+## PARSE AND SET OPTIONS
+
+while getopts ":efhos" opt; do
     case $opt in
         e)
-            ELF_FLAG=1 ;;
+            FLAGS[default]=0
+            FLAGS[exec_elf]=1 ;;
         f)
-            FORCE_FLAG=1 ;;
+            FLAGS[default]=0
+            FLAGS[force]=1 ;;
         h)
             usage
             exit 0 ;;
+        o)
+            FLAGS[default]=0
+            FLAGS[obj_elf]=1 ;;
         s)
-            SCRIPT_FLAG=1 ;;
+            FLAGS[default]=0
+            FLAGS[script]=1 ;;
         \?)
             echoerr "Error: unknown option '$OPTARG'"
             echoerr $HELP_MESSAGE
@@ -57,94 +108,62 @@ done
 # Remove options from $@
 shift $(( OPTIND - 1 ))
 
-# Default flag
-if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 0 ]]; then
-    ELF_FLAG=1
+## DEFAULT SETTINGS
+
+if [[ ${FLAGS[default]} -eq 1 ]]; then
+    FLAGS[exec_elf]=1
+    FLAGS[obj_elf]=1
 fi
 
-# Collect all the scripts and elfs into arrays $SCRIPTS, $ELFS
+## COLLECT FILES
 
-# If no <dir> argument was given, then scan pwd
+# If no <dir> arguments were given
 if [[ $# -eq 0 ]]; then
-
-    for file in $(ls); do
-        # If file is executable and not named like this script
-        if [[ -x $file && $file != $SCRIPT_NAME ]]; then
-
-            # If file type is ELF
-            if [[ $(file $file) =~ "ELF" ]]; then
-                ELFS+=("$file")
-
-            # If file type is some type of script
-            elif [[ $(file $file) =~ "script" ]]; then
-                SCRIPTS+=("$file")
-
-            fi
-
-        fi
-    done
-
-# If <dir> arguments are given
+    collect_files .
+# If <dir> arguments were given
 else
-
     for dir in $@; do
-        if [[ -d $dir ]]; then
-
-            for file in $(ls $dir); do
-                # If file is executable and not named like this script
-                if [[ -x $dir/$file && $dir/$file != $SCRIPT_NAME ]]; then
-
-                    # If file type is ELF
-                    if [[ $(file $dir/$file) =~ "ELF" ]]; then
-                        ELFS+=("$dir/$file")
-
-                    # If file type is some type of script
-                    elif [[ $(file $dir/$file) =~ "script" ]]; then
-                        SCRIPTS+=("$dir/$file")
-
-                    fi
-                fi
-
-            done
-
-        fi
+            [[ -d $dir ]] && collect_files $dir
     done
-
 fi
 
-# Collect files to be removed into $FILES_TO_REMOVE array
-if [[ $ELF_FLAG -eq 0 && $SCRIPT_FLAG -eq 1 ]]; then
-    FILES_TO_REMOVE=("${SCRIPTS[@]}")
-elif [[ $ELF_FLAG -eq 1 && $SCRIPT_FLAG -eq 0 ]]; then
-    FILES_TO_REMOVE=("${ELFS[@]}")
-else
-    FILES_TO_REMOVE=("${ELFS[@]}" "${SCRIPTS[@]}")
-fi
+## COLLECT TRASH
 
-# Prompt to remove each file from $FILES_TO_REMOVE array
-if [[ ${#FILES_TO_REMOVE[@]} -gt 0 ]]; then
+# Collect files to be removed into $TRASH array
+for flag in "${!FLAGS[@]}"; do
+    if [[ ${FLAGS[$flag]} -eq 1 ]]; then
+        case $flag in
+            exec_elf)
+                TRASH+=("${EXEC_ELFS[@]}") ;;
+            obj_elf)
+                TRASH+=("${OBJ_ELFS[@]}") ;;
+            script)
+                TRASH+=("${SCRIPTS[@]}") ;;
+        esac
+    fi
+done
 
-    if [[ $FORCE_FLAG -eq 1 ]]; then
-        for file in ${FILES_TO_REMOVE[@]}; do
-            rm $file
-        done
+## REMOVE TRASH
+
+# If length of $TRASH array is greater than 0
+if [[ ${#TRASH[@]} -gt 0 ]]; then
+
+    if [[ ${FLAGS[force]} -eq 1 ]]; then
+        remove_files
     else
-        for file in ${FILES_TO_REMOVE[@]}; do
-            echo "'$file' "
+        for file in ${TRASH[@]}; do
+            echo "'$file'"
         done
 
-        if [[ ${#FILES_TO_REMOVE[@]} -eq 1 ]]; then
+        if [[ ${#TRASH[@]} -eq 1 ]]; then
             echo -n "Remove this file? [y/n]: "
         else
             echo -n "Remove these files? [y/n]: "
         fi
 
-        read ans
-        if [[ "$ans" =~ ^[yY]$ ]]; then
-            for file in ${FILES_TO_REMOVE[@]}; do
-                rm $file
-            done
-        fi
+        read -e ans
+        [[ "$ans" =~ ^[yY]$ ]] && remove_files
     fi
 fi
 
+exit 0
