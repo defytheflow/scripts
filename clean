@@ -49,22 +49,22 @@ collect_files()
 {
     local dir=$1
 
-    for file in $(ls $dir); do
+    for file in "$dir"/*; do
         # If $dir/$file is executable
-        if [[ -x $dir/$file ]]; then
+        if [[ -x "$dir/$file" ]]; then
 
             # If $dir/$file is ELF
-            if [[ $(file $dir/$file) =~ "ELF" ]]; then
+            if [[ $(file "$dir/$file") =~ "ELF" ]]; then
                 EXEC_ELFS+=("$dir/$file")
 
             # If file is script
-            elif [[ $(file $dir/$file) =~ "script" ]]; then
+            elif [[ $(file "$dir/$file") =~ "script" ]]; then
                 SCRIPTS+=("$dir/$file")
 
             fi
 
         else
-            if [[ $(file $dir/$file) =~ "ELF" ]]; then
+            if [[ $(file "$dir/$file") =~ "ELF" ]]; then
                 OBJ_ELFS+=("$dir/$file")
             fi
         fi
@@ -73,8 +73,8 @@ collect_files()
 
 remove_files()
 {
-    for file in ${TRASH[@]}; do
-        rm $file
+    for file in "${TRASH[@]}"; do
+        rm "$file"
     done
 }
 
@@ -100,7 +100,7 @@ while getopts ":efhos" opt; do
             FLAGS[script]=1 ;;
         \?)
             echoerr "Error: unknown option '$OPTARG'"
-            echoerr $HELP_MESSAGE
+            echoerr "$HELP_MESSAGE"
             exit 1 ;;
     esac
 done
@@ -122,8 +122,8 @@ if [[ $# -eq 0 ]]; then
     collect_files .
 # If <dir> arguments were given
 else
-    for dir in $@; do
-            [[ -d $dir ]] && collect_files $dir
+    for dir in "$@"; do
+            [[ -d "$dir" ]] && collect_files "$dir"
     done
 fi
 
@@ -151,7 +151,7 @@ if [[ ${#TRASH[@]} -gt 0 ]]; then
     if [[ ${FLAGS[force]} -eq 1 ]]; then
         remove_files
     else
-        for file in ${TRASH[@]}; do
+        for file in "${TRASH[@]}"; do
             echo "'$file'"
         done
 
@@ -161,7 +161,7 @@ if [[ ${#TRASH[@]} -gt 0 ]]; then
             echo -n "Remove these files? [y/n]: "
         fi
 
-        read -e ans
+        read -re ans
         [[ "$ans" =~ ^[yY]$ ]] && remove_files
     fi
 fi

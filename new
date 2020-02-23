@@ -66,7 +66,7 @@ declare -A CURSOR_LINE_NUMBERS=(
 # Returns 0 if $1 is in $MAKEFILES
 makefile_supported() {
 
-    for lang in ${SUPPORTED_MAKEFILES[@]}; do
+    for lang in "${SUPPORTED_MAKEFILES[@]}"; do
         if [[ "$lang" == "$1" ]]; then
             return 0
         fi
@@ -86,17 +86,17 @@ copy_template() {
         if [[ ! -f $template ]]; then
             echoerr "Error: template not found '$template'"
         else
-            cp $template $file
+            cp "$template" "$file"
         fi
 
     else
 
         if [[ ${FLAGS[force]} -eq 1 ]]; then
-            cp $template $file
+            cp "$template" "$file"
         else
             echo "Warning: file already exists '$file'"
-            read -ep "Rewrite ? [y/n]: " ans
-            [[ "$ans" =~ ^[yY]$ ]] && cp $template $file
+            read -rep "Rewrite ? [y/n]: " ans
+            [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$file"
         fi
 
     fi
@@ -120,7 +120,7 @@ long_options="edit,force,help,lesson,make:"
 options=$(getopt -o $short_options -l $long_options -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echoerr $HELP_MESSAGE
+    echoerr "$HELP_MESSAGE"
     exit 1
 fi
 
@@ -140,10 +140,10 @@ while true; do
             FLAGS[lesson]=1 ;;
         -m | --make)
             shift
-            if ! makefile_supported $1; then
+            if ! makefile_supported "$1"; then
                 echoerr "Error: '$1' makefile is not supported."
                 echoerr "Supported makefiles: ${SUPPORTED_MAKEFILES[@]}"
-                echoerr $HELP_MESSAGE
+                echoerr "$HELP_MESSAGE"
                 exit 1
             fi
             FLAGS[make]=$1 ;;
@@ -159,7 +159,7 @@ done
 # Check if <file> argument was given
 if [[ $# -lt 1 ]]; then
     echoerr "Error: missing <file> argument"
-    echoerr $HELP_MESSAGE
+    echoerr "$HELP_MESSAGE"
     exit 1
 fi
 
@@ -167,13 +167,13 @@ fi
 
 # First create lessons
 if [[ ${FLAGS[lesson]} -eq 1 ]]; then
-    copy_template lesson-plan $1
+    copy_template lesson-plan "$1"
     shift
 fi
 
 # Create Makefiles
 if [[ $# -gt 0 && -n ${FLAGS[make]} ]]; then
-    copy_template ${FLAGS[make]}-makefile $1
+    copy_template "${FLAGS[make]}-makefile" "$1"
     shift
 fi
 
@@ -181,7 +181,7 @@ fi
 if [[ $# -gt 0 ]]; then
 
     # For each <file> argument
-    for file in $@; do
+    for file in "$@"; do
 
         # Extract the root part of file
         root=${file%.*}
@@ -192,10 +192,10 @@ if [[ $# -gt 0 ]]; then
 
         case $ext in
             asm | c | cpp | html | py | s | sh)
-                copy_template $ext  $file
+                copy_template "$ext"  "$file"
                 ;;
             *)
-                touch $file
+                touch "$file"
                 ;;
         esac
 
@@ -203,7 +203,7 @@ if [[ $# -gt 0 ]]; then
 
     # Open the first file after Makefile for editing
     if [[ ${FLAGS[edit]} -eq 1 ]]; then
-        vim -c 'startinsert' $1 "+${CURSOR_LINE_NUMBERS[$ext]}"
+        vim -c 'startinsert' "$1" "+${CURSOR_LINE_NUMBERS[$ext]}"
     fi
 
 fi
