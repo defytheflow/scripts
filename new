@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# TODO - first creates lessons, then makefiles
-#        implement options that take 2 arguments somehow :)
-
 usage()
 {
     echo -e "Creates default templates for files.\n"
@@ -33,62 +30,61 @@ usage()
     echo -e "  Artyom Danilov\n"
 }
 
-## GLOBAL VARIABLES
+# ------------------------------------------------------------------- #
+#                          Global variables                           #
+# ------------------------------------------------------------------- #
+
+SHORT_OPTS="efhlm:"
+LONG_OPTS="edit,force,help,lesson,make:"
+HELP_MSG="Try: 'new -h | --help' for more information"
 
 # Default templates must reside in this directory.
 TEMPLATES="/usr/share/templates/"
-
 SUPPORTED_MAKEFILES=(c cpp)
-
-HELP_MESSAGE="Try: 'new -h | --help' for more information"
+MAKEFILE_NAME="Makefile"
 
 declare -A FLAGS=(
-
     [edit]=0    # -e, --edit
     [force]=0   # -f, --force
     [lesson]=0  # -l, --lesson
     [make]=""   # -m, --make
-
 )
 
 # Line numbers where cursor should appear if --edit flag is on
 declare -A CURSOR_LINE_NUMBERS=(
-
-    ["c"]=6
-    ["cpp"]=8
-    ["html"]=8
-    ["py"]=5
-
+    [c]=6
+    [cpp]=8
+    [html]=8
+    [py]=5
 )
 
-## FUNCTION DECLARATIONS
+# ------------------------------------------------------------------- #
+#                           Functions                                 #
+# ------------------------------------------------------------------- #
 
 # Returns 0 if $1 is in $MAKEFILES
-makefile_supported() {
-
+makefile_supported()
+{
     for lang in "${SUPPORTED_MAKEFILES[@]}"; do
-        if [[ "$lang" == "$1" ]]; then
-            return 0
-        fi
+        [[ "$lang" == "$1" ]] && return 0
     done
     return 1
-
 }
 
 # Copies $1 template from $TEMPLATES directory into $2 file
-copy_template() {
-
+copy_template()
+{
     local template="$TEMPLATES/$1"
     local file=$2
 
+    # if file doesn't exist in pwd
     if [[ ! -f $(pwd)/$file ]]; then
-
+        # if template doesnt exist
         if [[ ! -f $template ]]; then
-            echoerr "Error: template not found '$template'"
+            echo "Error: template not found '$template'" >&2
         else
             cp "$template" "$file"
         fi
-
     else
 
         if [[ ${FLAGS[force]} -eq 1 ]]; then
@@ -100,33 +96,25 @@ copy_template() {
         fi
 
     fi
-
 }
 
-## VALIDATION
+# ------------------------------------------------------------------- #
+#                           Parse options                             #
+# ------------------------------------------------------------------- #
 
-# Check that $TEMPLATES directory exists
-if [[ ! -d $TEMPLATES ]]; then
-    echoerr "Error: unable to find '$TEMPLATES' directory"
-    echoerr "Fix: create '$TEMPLATES' directory and fill it with your templates"
-    exit 1
-fi
-
-## PARSE OPTIONS
-
-short_options="efhlm:"
-long_options="edit,force,help,lesson,make:"
-
-options=$(getopt -o $short_options -l $long_options -- "$@")
+ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echoerr "$HELP_MESSAGE"
+    echo "$HELP_MSG" >&2
     exit 1
 fi
 
-eval set -- "$options"  # sets $options as script arguments
+eval set -- "$ARGV"
 
-## SET UP OPTIONS
+# ------------------------------------------------------------------- #
+#                           Toggle options                            #
+# ------------------------------------------------------------------- #
+
 while true; do
     case $1 in
         -e | --edit)
@@ -141,9 +129,9 @@ while true; do
         -m | --make)
             shift
             if ! makefile_supported "$1"; then
-                echoerr "Error: '$1' makefile is not supported."
-                echoerr "Supported makefiles: ${SUPPORTED_MAKEFILES[@]}"
-                echoerr "$HELP_MESSAGE"
+                echo "Error: '$1' makefile is not supported." >&2
+                echo "Supported makefiles: ${SUPPORTED_MAKEFILES[@]}" >&2
+                echo "$HELP_MSG" >&2
                 exit 1
             fi
             FLAGS[make]=$1 ;;
@@ -154,27 +142,39 @@ while true; do
     shift
 done
 
-## VALIDATION
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
 
-# Check if <file> argument was given
-if [[ $# -lt 1 ]]; then
-    echoerr "Error: missing <file> argument"
-    echoerr "$HELP_MESSAGE"
+# Check that $TEMPLATES directory exists
+if [[ ! -d $TEMPLATES ]]; then
+    echo "Error: unable to find '$TEMPLATES' directory" >&2
+    echo "Fix: create '$TEMPLATES' directory and fill it with your templates" >&2
     exit 1
 fi
 
-## MAIN JOB
-
-# First create lessons
-if [[ ${FLAGS[lesson]} -eq 1 ]]; then
-    copy_template lesson-plan "$1"
-    shift
+# -e, --edit option requires a <file>
+if [[ ${FLAGS[edit]} -eq 1 ]]; then
+    # Check if <file> argument was given
+    if [[ $# -eq 0 ]]; then
+        echo "Error: missing <file> argument" >&2
+        echo "$HELP_MSG" >&2
+        exit 1
+    fi
 fi
 
-# Create Makefiles
-if [[ $# -gt 0 && -n ${FLAGS[make]} ]]; then
-    copy_template "${FLAGS[make]}-makefile" "$1"
-    shift
+# ------------------------------------------------------------------- #
+#                           Main job                                  #
+# ------------------------------------------------------------------- #
+
+# -m, --make option doesn't require a <file>
+if [[ -n ${FLAGS[make]} ]]; then
+    copy_template "${FLAGS[make]}-makefile" "$MAKEFILE_NAME"
+fi
+
+# -l, --lesson option doesn't require a <file>
+if [[ ${FLAGS[lesson]} -eq 1 ]]; then
+    copy_template lesson-plan $(date +"%d-%m-%y").txt
 fi
 
 # If still have files to create
@@ -201,7 +201,7 @@ if [[ $# -gt 0 ]]; then
 
     done
 
-    # Open the first file after Makefile for editing
+    # Open the first <file> for editing.
     if [[ ${FLAGS[edit]} -eq 1 ]]; then
         vim -c 'startinsert' "$1" "+${CURSOR_LINE_NUMBERS[$ext]}"
     fi
