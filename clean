@@ -2,154 +2,111 @@
 
 usage()
 {
-    echo -e "Removes executable files from directory.\n"
-    echo "Usage:"
+    echo -e "Removes certain types of files from directory.\n"
+    echo    "Usage:"
     echo -e "  clean [options] <dir>...\n"
-    echo "Arguments:"
-    echo "  dir    name of the directory"
-    echo ""
-    echo "Options:"
-    echo "  -e     remove executable ELF files     (default)"
-    echo "  -f     remove without prompt"
-    echo "  -h     display a usage message"
-    echo "  -o     remove non-executable ELF files (default)"
-    echo "  -s     remove executable scripts"
-    echo ""
-    echo "Examples:"
-    echo "  clean         removes all ELFs from cwd"
-    echo "  clean -e dir  removes executable ELF's from 'dir'"
-    echo "  clean -o .    removes non-executable ELF's from cwd"
-    echo "  clean -s dir  removes all executable scripts from 'dir'"
-    echo ""
+    echo    "Arguments:"
+    echo -e "  dir    name of the directory\n"
+    echo    "Options:"
+    echo    "  -b     remove ELF files             (default)"
+    echo    "  -f     remove without prompt"
+    echo    "  -h     display a usage message"
+    echo    "  -n     remove non-executable files"
+    echo    "  -s     remove script files"
+    echo -e "  -x     remove executable files\n"
+    echo    "Examples:"
+    echo    "  clean         removes all ELFs from cwd"
+    echo    "  clean -b      removes all ELFS from cwd"
+    echo    "  clean -s      removes all scripts from cwd"
+    echo    "  clean -x      removes all executable files from cwd"
+    echo    "  clean -n      removes all non-executable files from cwd"
+    echo    "  clean -xs     removes all executable scripts from cwd"
+    echo    "  clean -xb     removes all executable ELFS from cwd"
+    echo    "  clean -bs     removes all ELFS and scripts from cwd"
+    echo    "  clean -nb     removes non-executable ELFS from cwd"
+    echo -e "  clean -ns     removes non-executable scripts from cwd\n"
+
     echo "Author:"
     echo -e "  Artyom Danilov\n"
 }
 
-## GLOBAL VARIABLES
+# ------------------------------------------------------------------- #
+#                          Global variables                           #
+# ------------------------------------------------------------------- #
+
+SHORT_OPTS=":bfhnsx"
+HELP_MSG="Try: 'clean -h' for more information"
+
+TRASH=()
 
 declare -A FLAGS=(
-
-    [exec_elf]=0  # -e
+    [exec]=0     # -x
+    [bin]=0      # -b
     [default]=1
-    [force]=0     # -f
-    [obj_elf]=0   # -o
-    [script]=0    # -s
-
+    [force]=0    # -f
+    [no_exec]=0   # -n
+    [script]=0   # -s
 )
 
-EXEC_ELFS=()
-OBJ_ELFS=()
-SCRIPTS=()
+# ------------------------------------------------------------------- #
+#                          Functions                                  #
+# ------------------------------------------------------------------- #
 
-HELP_MESSAGE="Try: 'clean -h' for more information"
-
-## FUNCTION DECLARATIONS
-
-collect_files()
+# Based on set FLAGS collects files to TRASH array.
+collect_trash()
 {
     local dir=$1
+    if [[ ${FLAGS[bin]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir "script" ""
+        files_to_trash $dir "ELF" ""
+    elif [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir "script" "x"
+    elif [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[bin]} -eq 1 ]]; then
+        files_to_trash $dir "ELF" "x"
+    elif [[ ${FLAGS[no_exec]} -eq 1 && ${FLAGS[bin]} -eq 1 ]]; then
+        files_to_trash $dir "ELF" "n"
+    elif [[ ${FLAGS[no_exec]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir "script" "n"
+    elif [[ ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir "script"
+    elif [[ ${FLAGS[bin]} -eq 1 ]]; then
+        files_to_trash $dir "ELF"
+    elif [[ ${FLAGS[exec]} -eq 1 ]]; then
+        files_to_trash $dir "" "x"
+    elif [[ ${FLAGS[no_exec]} -eq 1 ]]; then
+        files_to_trash $dir "" "n"
+    fi
+}
+
+# Fills TRASH array with files from  dir based on its type and mode.
+files_to_trash()
+{
+    local dir=$1
+    local type=$2
+    local mode=$3  # x - executable, n - not executable
 
     for file in "$dir"/*; do
-        # If $dir/$file is executable
-        if [[ -x "$dir/$file" ]]; then
 
-            # If $dir/$file is ELF
-            if [[ $(file "$dir/$file") =~ "ELF" ]]; then
-                EXEC_ELFS+=("$dir/$file")
-
-            # If file is script
-            elif [[ $(file "$dir/$file") =~ "script" ]]; then
-                SCRIPTS+=("$dir/$file")
-
-            fi
-
-        else
-            if [[ $(file "$dir/$file") =~ "ELF" ]]; then
-                OBJ_ELFS+=("$dir/$file")
-            fi
+        local full_file="$dir/$file"
+        if [[ $mode == "x" && -n $type ]]; then
+            [[ -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
+        elif [[ $mode == "n" && -n $type ]]; then
+            [[ ! -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
+        elif [[ -n $type ]]; then
+            [[ $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
+        elif [[ $mode == "x" ]]; then
+            [[ -x "$full_file" ]] && TRASH+=("$full_file")
+        elif [[ $mode == "n" ]]; then
+            [[ ! -x "$full_file" ]] && TRASH+=("$full_file")
         fi
+
     done
 }
 
-remove_files()
+remove_trash()
 {
-    for file in "${TRASH[@]}"; do
-        rm "$file"
-    done
-}
-
-
-## PARSE AND SET OPTIONS
-
-while getopts ":efhos" opt; do
-    case $opt in
-        e)
-            FLAGS[default]=0
-            FLAGS[exec_elf]=1 ;;
-        f)
-            FLAGS[default]=0
-            FLAGS[force]=1 ;;
-        h)
-            usage
-            exit 0 ;;
-        o)
-            FLAGS[default]=0
-            FLAGS[obj_elf]=1 ;;
-        s)
-            FLAGS[default]=0
-            FLAGS[script]=1 ;;
-        \?)
-            echoerr "Error: unknown option '$OPTARG'"
-            echoerr "$HELP_MESSAGE"
-            exit 1 ;;
-    esac
-done
-
-# Remove options from $@
-shift $(( OPTIND - 1 ))
-
-## DEFAULT SETTINGS
-
-if [[ ${FLAGS[default]} -eq 1 ]]; then
-    FLAGS[exec_elf]=1
-    FLAGS[obj_elf]=1
-fi
-
-## COLLECT FILES
-
-# If no <dir> arguments were given
-if [[ $# -eq 0 ]]; then
-    collect_files .
-# If <dir> arguments were given
-else
-    for dir in "$@"; do
-            [[ -d "$dir" ]] && collect_files "$dir"
-    done
-fi
-
-## COLLECT TRASH
-
-# Collect files to be removed into $TRASH array
-for flag in "${!FLAGS[@]}"; do
-    if [[ ${FLAGS[$flag]} -eq 1 ]]; then
-        case $flag in
-            exec_elf)
-                TRASH+=("${EXEC_ELFS[@]}") ;;
-            obj_elf)
-                TRASH+=("${OBJ_ELFS[@]}") ;;
-            script)
-                TRASH+=("${SCRIPTS[@]}") ;;
-        esac
-    fi
-done
-
-## REMOVE TRASH
-
-# If length of $TRASH array is greater than 0
-if [[ ${#TRASH[@]} -gt 0 ]]; then
-
     if [[ ${FLAGS[force]} -eq 1 ]]; then
-        remove_files
+        remove_files "${TRASH[@]}"
     else
         for file in "${TRASH[@]}"; do
             echo "'$file'"
@@ -162,8 +119,80 @@ if [[ ${#TRASH[@]} -gt 0 ]]; then
         fi
 
         read -re ans
-        [[ "$ans" =~ ^[yY]$ ]] && remove_files
+        [[ "$ans" =~ ^[yY]$ ]] && remove_files "${TRASH[@]}"
     fi
+
+}
+
+remove_files()
+{
+    for file in "$@"; do
+        rm "$file"
+    done
+}
+
+# ------------------------------------------------------------------- #
+#                  Parse and Toggle options                           #
+# ------------------------------------------------------------------- #
+
+while getopts $SHORT_OPTS opt; do
+    case $opt in
+        b)
+            FLAGS[default]=0
+            FLAGS[bin]=1   ;;
+        f)
+            FLAGS[force]=1 ;;
+        h)
+            usage
+            exit 0 ;;
+        n)
+            FLAGS[default]=0
+            FLAGS[no_exec]=1 ;;
+        s)
+            FLAGS[default]=0
+            FLAGS[script]=1 ;;
+        x)
+            FLAGS[default]=0
+            FLAGS[exec]=1   ;;
+        \?)
+            echo "Error: unknown option '$OPTARG'" >&2
+            echo "$HELP_MSG" >&2
+            exit 1 ;;
+    esac
+done
+
+shift $(( OPTIND - 1 ))  # Remove options from $@
+
+# Default settings
+if [[ ${FLAGS[default]} -eq 1 ]]; then
+    FLAGS[bin]=1
 fi
+
+# ------------------------------------------------------------------- #
+#                        Validation                                   #
+# ------------------------------------------------------------------- #
+
+# -n and -x are conflicting options
+if [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[no_exec]} -eq 1 ]]; then
+    echo "Error: conflicting options '-x' and '-n'" >&2
+    echo $HELP_MSG >&2
+    exit 1
+fi
+
+# ------------------------------------------------------------------- #
+#                        Main job                                     #
+# ------------------------------------------------------------------- #
+
+# If no <dir> arguments were given
+if [[ $# -eq 0 ]]; then
+    collect_trash .
+else
+    for dir in "$@"; do
+            [[ -d "$dir" ]] && collect_trash "$dir"
+    done
+fi
+
+# If collected any trash ->
+[[ ${#TRASH[@]} -gt 0 ]] && remove_trash
 
 exit 0
