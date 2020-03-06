@@ -1,7 +1,7 @@
 # Generic C++ Makefile
 
-CPP_FLAGS=-g -Wall -W -Wconversion -Wshadow -Wwrite-strings \
-           -Wextra -std=c++17
+CPP_FLAGS=-g -Wall -W -Wconversion -Wshadow -Wwrite-strings -Wextra -std=c++17
+LIBS=
 
 %: %.cpp
 	g++ $^ $(CPP_FLAGS) -o $@
