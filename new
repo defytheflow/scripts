@@ -52,10 +52,10 @@ declare -A FLAGS=(
 
 # Line numbers where cursor should appear if --edit flag is on
 declare -A CURSOR_LINE_NUMBERS=(
-    [c]=6
+    [c]=5
     [cpp]=8
-    [html]=8
-    [py]=5
+    [html]=12
+    [py]=6
 )
 
 # ------------------------------------------------------------------- #
