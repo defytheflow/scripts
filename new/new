@@ -191,6 +191,16 @@ if [[ ${FLAGS[lesson]} -eq 1 ]]; then
     fi
 fi
 
+# If none of the file flags were used
+if [[ -z ${FLAGS[make]} && ${FLAGS[lesson]} -eq 0 && ${FLAGS[edit]} -eq 0 ]]; then
+    # Check if <file> argument was given
+    if [[ $# -eq 0 ]]; then
+        echo "Error: missing <file> argument" >&2
+        echo "$HELP_MSG" >&2
+        exit 1
+    fi
+fi
+
 # If still have files to create
 if [[ $# -gt 0 ]]; then
 
