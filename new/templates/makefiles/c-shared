@@ -1,0 +1,29 @@
+CC=gcc
+CFLAGS=-g -Wall -W -Wconversion -Wshadow -Wwrite-strings -Wextra -std=c11
+LDFLAGS= -shared
+
+INCS =
+SRCS =
+OBJS =
+
+TARGET_LIB =
+DEST_DIR = /usr/local/lib
+
+.PHONY: install
+install: $(TARGET_LIB)
+	sudo mv $^ $(DEST_DIR)
+	@make --no-print-directory clean
+
+.PHONY: uninstall
+	#
+
+$(OBJS): $(SRCS) $(INCS)
+	$(CC) -c $(CFLAGS) $^
+
+$(TARGET_LIB): $(OBJS)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+.PHONY: clean
+clean:
+	rm -f $(TARGET_LIB) $(OBJS)
+
