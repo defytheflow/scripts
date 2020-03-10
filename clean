@@ -3,30 +3,34 @@
 usage()
 {
     echo -e "Removes certain types of files from directory.\n"
+
     echo    "Usage:"
     echo -e "  clean [options] <dir>...\n"
-    echo    "Arguments:"
-    echo -e "  dir    name of the directory\n"
-    echo    "Options:"
-    echo    "  -b     remove ELF files             (default)"
-    echo    "  -f     remove without prompt"
-    echo    "  -h     display a usage message"
-    echo    "  -n     remove non-executable files"
-    echo    "  -s     remove script files"
-    echo -e "  -x     remove executable files\n"
-    echo    "Examples:"
-    echo    "  clean         removes all ELFs from cwd"
-    echo    "  clean -b      removes all ELFS from cwd"
-    echo    "  clean -s      removes all scripts from cwd"
-    echo    "  clean -x      removes all executable files from cwd"
-    echo    "  clean -n      removes all non-executable files from cwd"
-    echo    "  clean -xs     removes all executable scripts from cwd"
-    echo    "  clean -xb     removes all executable ELFS from cwd"
-    echo    "  clean -bs     removes all ELFS and scripts from cwd"
-    echo    "  clean -nb     removes non-executable ELFS from cwd"
-    echo -e "  clean -ns     removes non-executable scripts from cwd\n"
 
-    echo "Author:"
+    echo    "Arguments:"
+    echo -e "  dir           name of the directory\n"
+
+    echo    "Options:"
+    echo    "  -b            remove ELF files           (default)"
+    echo    "  -f            remove without prompt."
+    echo    "  -h            display this message."
+    echo    "  -n            remove non-executable files."
+    echo    "  -s            remove script files."
+    echo -e "  -x            remove executable files.\n"
+
+    echo    "Examples:"
+    echo    "  clean         remove all ELFs from cwd"
+    echo    "  clean -b      remove all ELFS from cwd"
+    echo    "  clean -s      remove all scripts from cwd"
+    echo    "  clean -x      remove all executable files from cwd"
+    echo    "  clean -n      remove all non-executable files from cwd"
+    echo    "  clean -xs     remove all executable scripts from cwd"
+    echo    "  clean -xb     remove all executable ELFS from cwd"
+    echo    "  clean -bs     remove all ELFS and scripts from cwd"
+    echo    "  clean -nb     remove non-executable ELFS from cwd"
+    echo -e "  clean -ns     remove non-executable scripts from cwd\n"
+
+    echo    "Author:"
     echo -e "  Artyom Danilov\n"
 }
 
@@ -44,7 +48,7 @@ declare -A FLAGS=(
     [bin]=0      # -b
     [default]=1
     [force]=0    # -f
-    [no_exec]=0   # -n
+    [no_exec]=0  # -n
     [script]=0   # -s
 )
 
@@ -52,7 +56,7 @@ declare -A FLAGS=(
 #                          Functions                                  #
 # ------------------------------------------------------------------- #
 
-# Based on set FLAGS collects files to TRASH array.
+# Based on set FLAGS collect files to TRASH array.
 collect_trash()
 {
     local dir=$1
@@ -78,15 +82,14 @@ collect_trash()
     fi
 }
 
-# Fills TRASH array with files from  dir based on its type and mode.
+# Fill TRASH array with files from dir based on their type and mode.
 files_to_trash()
 {
     local dir=$1
     local type=$2
     local mode=$3  # x - executable, n - not executable
 
-    for file in "$dir"/*; do
-
+    for file in $(ls $dir); do
         local full_file="$dir/$file"
         if [[ $mode == "x" && -n $type ]]; then
             [[ -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
@@ -132,38 +135,52 @@ remove_files()
 }
 
 # ------------------------------------------------------------------- #
-#                  Parse and Toggle options                           #
+#                           Parse options                             #
 # ------------------------------------------------------------------- #
 
-while getopts $SHORT_OPTS opt; do
-    case $opt in
-        b)
+ARGV=$(getopt -o $SHORT_OPTS -- "$@")
+
+if [[ $? -ne 0 ]]; then
+    echo "$HELP_MSG" >&2
+    exit 1
+fi
+
+eval set -- "$ARGV"
+
+# ------------------------------------------------------------------- #
+#                           Toggle options                            #
+# ------------------------------------------------------------------- #
+
+while true; do
+    case $1 in
+        -b)
             FLAGS[default]=0
             FLAGS[bin]=1   ;;
-        f)
+        -f)
             FLAGS[force]=1 ;;
-        h)
+        -h)
             usage
             exit 0 ;;
-        n)
+        -n)
             FLAGS[default]=0
             FLAGS[no_exec]=1 ;;
-        s)
+        -s)
             FLAGS[default]=0
             FLAGS[script]=1 ;;
-        x)
+        -x)
             FLAGS[default]=0
             FLAGS[exec]=1   ;;
-        \?)
-            echo "Error: unknown option '$OPTARG'" >&2
-            echo "$HELP_MSG" >&2
-            exit 1 ;;
+        --)
+            shift
+            break           ;;
     esac
+    shift
 done
 
-shift $(( OPTIND - 1 ))  # Remove options from $@
+# ------------------------------------------------------------------- #
+#                       Default settings                              #
+# ------------------------------------------------------------------- #
 
-# Default settings
 if [[ ${FLAGS[default]} -eq 1 ]]; then
     FLAGS[bin]=1
 fi
