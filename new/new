@@ -3,29 +3,28 @@
 usage()
 {
     echo -e "Creates default templates for files.\n"
-    echo "Usage:"
+
+    echo    "Usage:"
     echo -e "  new [options] <file>...\n"
-    echo "Arguments:"
-    echo "  file                        name of the file to create."
-    echo "  lang                        c, cpp"
-    echo ""
-    echo "Options:"
-    echo "  -e, --edit                  open <file> for editing in vim."
-    echo "  -f, --force                 disables warnings."
-    echo "  -h, --help                  displays a usage message."
-    echo "  -l, --lesson                generates a default lesson plan."
-    echo "  -m <lang>, --make <lang>    generates a default makefile for <lang>."
-    echo ""
-    echo "Examples:"
-    echo "  new hello                   just creates a file 'hello'"
-    echo "  new hello.c                 creates a default C template."
-    echo "  new hello.c hello.py        creates C and Python default templates."
-    echo "  new -m c Make               creates a defaut  C makefile."
-    echo "  new --make=cpp Makefile     creates a default C++ makefile."
-    echo "  new -e file                 creates 'file' and opens in vim"
-    echo "  new --edit hello.py         creates a default Python template and"
-    echo "                              opens it for editing in vim."
-    echo ""
+
+    echo    "Arguments:"
+    echo    "  file                        name of the file to create."
+    echo -e "  type                        c, cpp\n"
+
+    echo    "Options:"
+    echo    "  -e, --edit                  open <file> for editing in vim."
+    echo    "  -f, --force                 disable warnings."
+    echo    "  -h, --help                  display this message."
+    echo    "  -l, --lesson                generate a default lesson plan."
+    echo -e "  -m <type>, --make <type>    generate a default makefile of <type>.\n"
+
+    echo    "Examples:"
+    echo    "  new hello                   create a file 'hello'"
+    echo    "  new hello.c                 create a default C template."
+    echo    "  new -e hello                create a file 'hello' and open in vim"
+    echo    "  new -e hello.c              create a default C template file and"
+    echo -e "                              open for editing in vim.\n"
+
     echo "Author:"
     echo -e "  Artyom Danilov\n"
 }
@@ -39,8 +38,10 @@ LONG_OPTS="edit,force,help,lesson,make:"
 HELP_MSG="Try: 'new -h | --help' for more information"
 
 # Default templates must reside in this directory.
-TEMPLATES="/usr/share/templates/"
-SUPPORTED_MAKEFILES=(c cpp)
+TEMPLATES_DIR_NAME="/usr/share/templates/"
+
+# Names of supported makefiles
+SUPPORTED_MAKEFILES=(c-project c-shared cpp-project)
 MAKEFILE_NAME="Makefile"
 
 declare -A FLAGS=(
@@ -50,7 +51,7 @@ declare -A FLAGS=(
     [make]=""   # -m, --make
 )
 
-# Line numbers where cursor should appear if --edit flag is on
+# Line numbers where cursor should appear if --edit flag is on.
 declare -A CURSOR_LINE_NUMBERS=(
     [c]=5
     [cpp]=8
@@ -71,10 +72,10 @@ makefile_supported()
     return 1
 }
 
-# Copies $1 template from $TEMPLATES directory into $2 file
+# Copies $1 template from $TEMPLATES_DIR_NAME directory into $2 file
 copy_template()
 {
-    local template="$TEMPLATES/$1"
+    local template="$TEMPLATES_DIR_NAME/$1"
     local file=$2
 
     # if file doesn't exist in pwd
@@ -146,10 +147,10 @@ done
 #                           Validation                                #
 # ------------------------------------------------------------------- #
 
-# Check that $TEMPLATES directory exists
-if [[ ! -d $TEMPLATES ]]; then
-    echo "Error: unable to find '$TEMPLATES' directory" >&2
-    echo "Fix: create '$TEMPLATES' directory and fill it with your templates" >&2
+# Check that $TEMPLATES_DIR_NAME directory exists
+if [[ ! -d $TEMPLATES_DIR_NAME ]]; then
+    echo "Error: unable to find '$TEMPLATES_DIR_NAME' directory" >&2
+    echo "Fix: create '$TEMPLATES_DIR_NAME' directory and fill it with your templates" >&2
     exit 1
 fi
 
@@ -169,12 +170,25 @@ fi
 
 # -m, --make option doesn't require a <file>
 if [[ -n ${FLAGS[make]} ]]; then
-    copy_template "${FLAGS[make]}-makefile" "$MAKEFILE_NAME"
+    # Check if no <file> arguments were given or <file> argument has an extension
+    if [[ $# -eq 0 || "$1" =~ ^.+\..+$ ]]; then
+        copy_template "makefiles/${FLAGS[make]}" "$MAKEFILE_NAME"
+    else
+        copy_template "makefiles/${FLAGS[make]}" "$1"
+        shift
+    fi
 fi
+
 
 # -l, --lesson option doesn't require a <file>
 if [[ ${FLAGS[lesson]} -eq 1 ]]; then
-    copy_template lesson-plan $(date +"%d-%m-%y").txt
+    # Check if no <file> arguments were given or <file> argument has an extension
+    if [[ $# -eq 0 || "$1" =~ ^.+\..+$ ]]; then
+        copy_template lesson-plan $(date +"%d-%m-%y").txt
+    else
+        copy_template lesson-plan "$1"
+        shift
+    fi
 fi
 
 # If still have files to create
