@@ -6,3 +6,4 @@ install:
 	sudo cp -r new/templates /usr/share/templates
 	sudo cp -f new/new $(DEST_DIR)
 	sudo cp -f clean $(DEST_DIR)
+	sudo cp -f list  $(DEST_DIR)
