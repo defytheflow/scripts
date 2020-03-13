@@ -2,36 +2,37 @@
 
 usage()
 {
-    echo -e "Removes certain types of files from directory.\n"
-
-    echo    "Usage:"
-    echo -e "  clean [options] <dir>...\n"
-
-    echo    "Arguments:"
-    echo -e "  dir           name of the directory\n"
-
-    echo    "Options:"
-    echo    "  -b            remove ELF files           (default)"
-    echo    "  -f            remove without prompt."
-    echo    "  -h            display this message."
-    echo    "  -n            remove non-executable files."
-    echo    "  -s            remove script files."
-    echo -e "  -x            remove executable files.\n"
-
-    echo    "Examples:"
-    echo    "  clean         remove all ELFs from cwd"
-    echo    "  clean -b      remove all ELFS from cwd"
-    echo    "  clean -s      remove all scripts from cwd"
-    echo    "  clean -x      remove all executable files from cwd"
-    echo    "  clean -n      remove all non-executable files from cwd"
-    echo    "  clean -xs     remove all executable scripts from cwd"
-    echo    "  clean -xb     remove all executable ELFS from cwd"
-    echo    "  clean -bs     remove all ELFS and scripts from cwd"
-    echo    "  clean -nb     remove non-executable ELFS from cwd"
-    echo -e "  clean -ns     remove non-executable scripts from cwd\n"
-
-    echo    "Author:"
-    echo -e "  Artyom Danilov\n"
+    printf "%b"                                                   \
+    "Removes certain types of files from directory.\n\n"          \
+                                                                  \
+    "Usage:\n"                                                    \
+    "  clean [options] <dir>...\n\n"                              \
+                                                                  \
+    "Arguments:\n"                                                \
+    "  dir           name of the directory\n\n"                   \
+                                                                  \
+    "Options:\n"                                                  \
+    "  -b            remove ELF files           (default)\n"      \
+    "  -f            remove without prompt.\n"                    \
+    "  -h            display this message.\n"                     \
+    "  -n            remove non-executable files.\n"              \
+    "  -s            remove script files.\n"                      \
+    "  -x            remove executable files.\n\n"                \
+                                                                  \
+    "Examples:\n"                                                 \
+    "  clean         remove all ELFs from cwd\n"                  \
+    "  clean -b      remove all ELFS from cwd\n"                  \
+    "  clean -s      remove all scripts from cwd\n"               \
+    "  clean -x      remove all executable files from cwd\n"      \
+    "  clean -n      remove all non-executable files from cwd\n"  \
+    "  clean -xs     remove all executable scripts from cwd\n"    \
+    "  clean -xb     remove all executable ELFS from cwd\n"       \
+    "  clean -bs     remove all ELFS and scripts from cwd\n"      \
+    "  clean -nb     remove non-executable ELFS from cwd\n"       \
+    "  clean -ns     remove non-executable scripts from cwd\n\n"  \
+                                                                  \
+    "Author:\n"                                                   \
+    "  Artyom Danilov\n\n"
 }
 
 # --------------------------------------------------------------------------- #

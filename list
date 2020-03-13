@@ -2,20 +2,21 @@
 
 usage()
 {
-    echo -e "Create lists.\n"
-
-    echo    "Usage:"
-    echo -e "  list [options]\n"
-
-    echo    "Options:"
-    echo    "  -h, --help             display this message."
-    echo    "  -m, --mark             mark used in '-u' option."
-    echo    "  -o, --ordered          create an ordered list."
-    echo    "  -s, --sep              separator used in '-o' option."
-    echo -e "  -u, --unordered        create an unordered list."
-
-    echo    "Author:"
-    echo -e "  Artyom Danilov\n"
+    printf "%b"                                                  \
+    "Create lists.\n\n"                                          \
+                                                                 \
+    "Usage:\n"                                                   \
+    "  list [options]\n\n"                                       \
+                                                                 \
+    "Options:\n"                                                 \
+    "  -h, --help             display this message.\n"           \
+    "  -m, --mark             mark used in '-u' option.\n"       \
+    "  -o, --ordered          create an ordered list.\n"         \
+    "  -s, --sep              separator used in '-o' option.\n"  \
+    "  -u, --unordered        create an unordered list.\n\n"     \
+                                                                 \
+    "Author:\n"                                                  \
+    "  Artyom Danilov\n\n"
 }
 
 # --------------------------------------------------------------------------- #

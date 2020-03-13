@@ -2,19 +2,20 @@
 
 usage()
 {
-    echo -e "Correct order of include directives in C/C++ source files.\n"
-
-    echo    "Usage:"
-    echo -e "  include-order [options] <file>...\n"
-
-    echo    "Arguments:"
-    echo -e "  file                C/C++ source file.\n"
-
-    echo    "Options:"
-    echo -e "  -h, --help          display this message.\n"
-
-    echo    "Author:"
-    echo -e "  Artyom Danilov\n"
+    printf "%b"                                                       \
+    "Correct order of include directives in C/C++ source files.\n\n"  \
+                                                                      \
+    "Usage:\n"                                                        \
+    "  include-order [options] <file>...\n\n"                         \
+                                                                      \
+    "Arguments:\n"                                                    \
+    "  file                C/C++ source file.\n\n"                    \
+                                                                      \
+    "Options:\n"                                                      \
+    "  -h, --help          display this message.\n\n"                 \
+                                                                      \
+    "Author:\n"                                                       \
+    "  Artyom Danilov\n\n"
 }
 
 # --------------------------------------------------------------------------- #

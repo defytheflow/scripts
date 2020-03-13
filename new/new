@@ -2,31 +2,32 @@
 
 usage()
 {
-    echo -e "Creates default templates for files.\n"
-
-    echo    "Usage:"
-    echo -e "  new [options] <file>...\n"
-
-    echo    "Arguments:"
-    echo    "  file                        name of the file to create."
-    echo -e "  type                        c, cpp\n"
-
-    echo    "Options:"
-    echo    "  -e, --edit                  open <file> for editing in vim."
-    echo    "  -f, --force                 disable warnings."
-    echo    "  -h, --help                  display this message."
-    echo    "  -l, --lesson                generate a default lesson plan."
-    echo -e "  -m <type>, --make <type>    generate a default makefile of <type>.\n"
-
-    echo    "Examples:"
-    echo    "  new hello                   create a file 'hello'"
-    echo    "  new hello.c                 create a default C template."
-    echo    "  new -e hello                create a file 'hello' and open in vim"
-    echo    "  new -e hello.c              create a default C template file and"
-    echo -e "                              open for editing in vim.\n"
-
-    echo "Author:"
-    echo -e "  Artyom Danilov\n"
+    printf "%b"                                                                \
+    "Creates default templates for files.\n\n"                                 \
+                                                                               \
+    "Usage:\n"                                                                 \
+    "  new [options] <file>...\n\n"                                            \
+                                                                               \
+    "Arguments:\n"                                                             \
+    "  file                        name of the file to create.\n"              \
+    "  type                        c, cpp\n\n"                                 \
+                                                                               \
+    "Options:\n"                                                               \
+    "  -e, --edit                  open <file> for editing in vim.\n"          \
+    "  -f, --force                 disable warnings.\n"                        \
+    "  -h, --help                  display this message.\n"                    \
+    "  -l, --lesson                generate a default lesson plan.\n"          \
+    "  -m <type>, --make <type>    generate a default makefile of <type>.\n\n" \
+                                                                               \
+    "Examples:\n"                                                              \
+    "  new hello                   create a file 'hello'.\n"                   \
+    "  new hello.c                 create a default C template.\n"             \
+    "  new -e hello                create a file 'hello' and open in vim\n"    \
+    "  new -e hello.c              create a default C template file and\n"     \
+    "                              open for editing in vim.\n\n"               \
+                                                                               \
+    "Author:\n"                                                                \
+    "  Artyom Danilov\n\n"
 }
 
 # --------------------------------------------------------------------------- #
