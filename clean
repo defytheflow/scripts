@@ -2,42 +2,42 @@
 
 usage()
 {
-    printf "%b"                                                   \
-    "Removes certain types of files from directory.\n\n"          \
-                                                                  \
-    "Usage:\n"                                                    \
-    "  clean [options] <dir>...\n\n"                              \
-                                                                  \
-    "Arguments:\n"                                                \
-    "  dir           name of the directory\n\n"                   \
-                                                                  \
-    "Options:\n"                                                  \
-    "  -b            remove ELF files           (default)\n"      \
-    "  -f            remove without prompt.\n"                    \
-    "  -h            display this message.\n"                     \
-    "  -n            remove non-executable files.\n"              \
-    "  -s            remove script files.\n"                      \
-    "  -x            remove executable files.\n\n"                \
-                                                                  \
-    "Examples:\n"                                                 \
-    "  clean         remove all ELFs from cwd\n"                  \
-    "  clean -b      remove all ELFS from cwd\n"                  \
-    "  clean -s      remove all scripts from cwd\n"               \
-    "  clean -x      remove all executable files from cwd\n"      \
-    "  clean -n      remove all non-executable files from cwd\n"  \
-    "  clean -xs     remove all executable scripts from cwd\n"    \
-    "  clean -xb     remove all executable ELFS from cwd\n"       \
-    "  clean -bs     remove all ELFS and scripts from cwd\n"      \
-    "  clean -nb     remove non-executable ELFS from cwd\n"       \
-    "  clean -ns     remove non-executable scripts from cwd\n\n"  \
-                                                                  \
-    "Author:\n"                                                   \
+    printf "%b"                                                                \
+    "Removes certain types of files from directory.\n\n"                       \
+                                                                               \
+    "Usage:\n"                                                                 \
+    "  clean [options] <dir>...\n\n"                                           \
+                                                                               \
+    "Arguments:\n"                                                             \
+    "  dir           name of the directory\n\n"                                \
+                                                                               \
+    "Options:\n"                                                               \
+    "  -b            remove ELF files           (default)\n"                   \
+    "  -f            remove without prompt.\n"                                 \
+    "  -h            display this message.\n"                                  \
+    "  -n            remove non-executable files.\n"                           \
+    "  -s            remove script files.\n"                                   \
+    "  -x            remove executable files.\n\n"                             \
+                                                                               \
+    "Examples:\n"                                                              \
+    "  clean         remove all ELFs from cwd\n"                               \
+    "  clean -b      remove all ELFS from cwd\n"                               \
+    "  clean -s      remove all scripts from cwd\n"                            \
+    "  clean -x      remove all executable files from cwd\n"                   \
+    "  clean -n      remove all non-executable files from cwd\n"               \
+    "  clean -xs     remove all executable scripts from cwd\n"                 \
+    "  clean -xb     remove all executable ELFS from cwd\n"                    \
+    "  clean -bs     remove all ELFS and scripts from cwd\n"                   \
+    "  clean -nb     remove non-executable ELFS from cwd\n"                    \
+    "  clean -ns     remove non-executable scripts from cwd\n\n"               \
+                                                                               \
+    "Author:\n"                                                                \
     "  Artyom Danilov\n\n"
 }
 
-# --------------------------------------------------------------------------- #
-#                             Global Variables                                #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                               Global Variables                               #
+# ---------------------------------------------------------------------------- #
 
 SHORT_OPTS=":bfhnsx"
 HELP_MSG="Try: 'clean -h' for more information"
@@ -53,9 +53,9 @@ declare -A FLAGS=(
     [script]=0   # -s
 )
 
-# --------------------------------------------------------------------------- #
-#                                Functions                                    #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                  Functions                                   #
+# ---------------------------------------------------------------------------- #
 
 # Based on set FLAGS collect files to TRASH array.
 collect_trash()
@@ -135,9 +135,9 @@ remove_files()
     done
 }
 
-# --------------------------------------------------------------------------- #
-#                               Parse Options                                 #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                Parse Options                                 #
+# ---------------------------------------------------------------------------- #
 
 ARGV=$(getopt -o $SHORT_OPTS -- "$@")
 
@@ -148,9 +148,9 @@ fi
 
 eval set -- "$ARGV"
 
-# --------------------------------------------------------------------------- #
-#                               Toggle Options                                #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                Toggle Options                                #
+# ---------------------------------------------------------------------------- #
 
 while true; do
     case $1 in
@@ -178,17 +178,17 @@ while true; do
     shift
 done
 
-# --------------------------------------------------------------------------- #
-#                             Default Settings                                #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                               Default Settings                               #
+# ---------------------------------------------------------------------------- #
 
 if [[ ${FLAGS[default]} -eq 1 ]]; then
     FLAGS[bin]=1
 fi
 
-# --------------------------------------------------------------------------- #
-#                                 Validation                                  #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                  Validation                                  #
+# ---------------------------------------------------------------------------- #
 
 # -n and -x are conflicting options
 if [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[no_exec]} -eq 1 ]]; then
@@ -197,9 +197,9 @@ if [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[no_exec]} -eq 1 ]]; then
     exit 1
 fi
 
-# --------------------------------------------------------------------------- #
-#                                 Main Job                                    #
-# --------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
+#                                   Main Job                                   #
+# ---------------------------------------------------------------------------- #
 
 # If no <dir> arguments were given
 if [[ $# -eq 0 ]]; then
