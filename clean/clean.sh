@@ -35,27 +35,8 @@ usage()
     "  Artyom Danilov\n\n"
 }
 
-# ---------------------------------------------------------------------------- #
-#                               Global Variables                               #
-# ---------------------------------------------------------------------------- #
-
-SHORT_OPTS=":bfhnsx"
-HELP_MSG="Try: 'clean -h' for more information"
-
-TRASH=()
-
-declare -A FLAGS=(
-    [exec]=0     # -x
-    [bin]=0      # -b
-    [default]=1
-    [force]=0    # -f
-    [no_exec]=0  # -n
-    [script]=0   # -s
-)
-
-# ---------------------------------------------------------------------------- #
-#                                  Functions                                   #
-# ---------------------------------------------------------------------------- #
+# Absolute import
+. $(dirname $(realpath $0))/settings.sh
 
 # Based on set FLAGS collect files to TRASH array.
 collect_trash()
@@ -135,71 +116,12 @@ remove_files()
     done
 }
 
-# ---------------------------------------------------------------------------- #
-#                                Parse Options                                 #
-# ---------------------------------------------------------------------------- #
-
-ARGV=$(getopt -o $SHORT_OPTS -- "$@")
-
-if [[ $? -ne 0 ]]; then
-    echo "$HELP_MSG" >&2
-    exit 1
-fi
-
-eval set -- "$ARGV"
-
-# ---------------------------------------------------------------------------- #
-#                                Toggle Options                                #
-# ---------------------------------------------------------------------------- #
-
-while true; do
-    case $1 in
-        -b)
-            FLAGS[default]=0
-            FLAGS[bin]=1   ;;
-        -f)
-            FLAGS[force]=1 ;;
-        -h)
-            usage
-            exit 0 ;;
-        -n)
-            FLAGS[default]=0
-            FLAGS[no_exec]=1 ;;
-        -s)
-            FLAGS[default]=0
-            FLAGS[script]=1 ;;
-        -x)
-            FLAGS[default]=0
-            FLAGS[exec]=1   ;;
-        --)
-            shift
-            break           ;;
-    esac
-    shift
-done
-
-# ---------------------------------------------------------------------------- #
-#                               Default Settings                               #
-# ---------------------------------------------------------------------------- #
-
-if [[ ${FLAGS[default]} -eq 1 ]]; then
-    FLAGS[bin]=1
-fi
-
-# ---------------------------------------------------------------------------- #
-#                                  Validation                                  #
-# ---------------------------------------------------------------------------- #
-
 # -n and -x are conflicting options
 if [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[no_exec]} -eq 1 ]]; then
     echo "Error: conflicting options '-x' and '-n'" >&2
     echo $HELP_MSG >&2
     exit 1
 fi
-
-# ---------------------------------------------------------------------------- #
-#                                   Main Job                                   #
-# ---------------------------------------------------------------------------- #
 
 # If no <dir> arguments were given
 if [[ $# -eq 0 ]]; then
