@@ -30,126 +30,12 @@ usage()
     "  Artyom Danilov\n\n"
 }
 
-# ---------------------------------------------------------------------------- #
-#                               Global Variables                               #
-# ---------------------------------------------------------------------------- #
-
-SHORT_OPTS="efhlm:"
-LONG_OPTS="edit,force,help,lesson,make:"
-HELP_MSG="Try: 'new -h | --help' for more information"
-
-# Default templates must reside in this directory.
-TEMPLATES_DIR_NAME="/usr/share/templates/"
-
-# Names of supported makefiles
-SUPPORTED_MAKEFILES=(c-project c-shared cpp-project)
-MAKEFILE_NAME="Makefile"
-
-declare -A FLAGS=(
-    [edit]=0    # -e, --edit
-    [force]=0   # -f, --force
-    [lesson]=0  # -l, --lesson
-    [make]=""   # -m, --make
-)
-
-# Line numbers where cursor should appear if --edit flag is on.
-declare -A CURSOR_LINE_NUMBERS=(
-    [c]=5
-    [cpp]=8
-    [html]=12
-    [py]=6
-)
-
-# ---------------------------------------------------------------------------- #
-#                                  Functions                                   #
-# ---------------------------------------------------------------------------- #
-
-# Returns 0 if $1 is in $MAKEFILES
-makefile_supported()
-{
-    for lang in "${SUPPORTED_MAKEFILES[@]}"; do
-        [[ "$lang" == "$1" ]] && return 0
-    done
-    return 1
-}
-
-# Copies $1 template from $TEMPLATES_DIR_NAME directory into $2 file
-copy_template()
-{
-    local template="$TEMPLATES_DIR_NAME/$1"
-    local file=$2
-
-    # if file doesn't exist in pwd
-    if [[ ! -f $(pwd)/$file ]]; then
-        # if template doesnt exist
-        if [[ ! -f $template ]]; then
-            echo "Error: template not found '$template'" >&2
-        else
-            cp "$template" "$file"
-        fi
-    else
-
-        if [[ ${FLAGS[force]} -eq 1 ]]; then
-            cp "$template" "$file"
-        else
-            echo "Warning: file already exists '$file'"
-            read -rep "Rewrite ? [y/n]: " ans
-            [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$file"
-        fi
-
-    fi
-}
-
-# ---------------------------------------------------------------------------- #
-#                                Parse Options                                 #
-# ---------------------------------------------------------------------------- #
-
-ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
-
-if [[ $? -ne 0 ]]; then
-    echo "$HELP_MSG" >&2
-    exit 1
-fi
-
-eval set -- "$ARGV"
-
-# ---------------------------------------------------------------------------- #
-#                                Toggle Options                                #
-# ---------------------------------------------------------------------------- #
-
-while true; do
-    case $1 in
-        -e | --edit)
-            FLAGS[edit]=1   ;;
-        -f | --force)
-            FLAGS[force]=1  ;;
-        -h | --help)
-            usage
-            exit 0          ;;
-        -l | --lesson)
-            FLAGS[lesson]=1 ;;
-        -m | --make)
-            shift
-            if ! makefile_supported "$1"; then
-                echo "Error: '$1' makefile is not supported." >&2
-                echo "Supported makefiles: ${SUPPORTED_MAKEFILES[@]}" >&2
-                echo "$HELP_MSG" >&2
-                exit 1
-            fi
-            FLAGS[make]=$1 ;;
-        --)
-            shift
-            break          ;;
-    esac
-    shift
-done
-
-# ---------------------------------------------------------------------------- #
-#                                  Validation                                  #
-# ---------------------------------------------------------------------------- #
+# Absolute imports
+. $(dirname $(realpath $0))/settings.sh
+. $(dirname $(realpath $0))/helpers.sh
 
 # Check that $TEMPLATES_DIR_NAME directory exists
-if [[ ! -d $TEMPLATES_DIR_NAME ]]; then
+if [[ ! -d "$TEMPLATES_DIR_NAME" ]]; then
     echo "Error: unable to find '$TEMPLATES_DIR_NAME' directory" >&2
     echo "Fix: create '$TEMPLATES_DIR_NAME' directory and fill it with your templates" >&2
     exit 1
@@ -164,10 +50,6 @@ if [[ ${FLAGS[edit]} -eq 1 ]]; then
         exit 1
     fi
 fi
-
-# ---------------------------------------------------------------------------- #
-#                                   Main Job                                   #
-# ---------------------------------------------------------------------------- #
 
 # -m, --make option doesn't require a <file>
 if [[ -n ${FLAGS[make]} ]]; then
