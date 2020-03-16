@@ -1,37 +1,68 @@
 #!/bin/bash
 
-# Returns 0 if $1 is in $MAKEFILES
+# Display usage message.
+usage()
+{
+    printf "%b"                                                                \
+    "Create default templates for files.\n\n"                                  \
+                                                                               \
+    "Usage:\n"                                                                 \
+    "  new [options] <file>...\n\n"                                            \
+                                                                               \
+    "Arguments:\n"                                                             \
+    "  file               name of the file to create.\n\n"                     \
+                                                                               \
+    "Options:\n"                                                               \
+    "  -e, --edit         open <file>s for editing in vim.\n"                  \
+    "  -f, --force        disable warnings.\n"                                 \
+    "      --help         display this message and exit.\n"                    \
+    "  -m, --make=TYPE    create a default makefile of TYPE; TYPE can be\n"    \
+    "                     'c-project', 'cpp-project' or 'c-shared'.\n\n"       \
+                                                                               \
+    "Examples:\n"                                                              \
+    "  new hello          create a file 'hello'.\n"                            \
+    "  new hello.c        create a default C template.\n"                      \
+    "  new -e hello       create a file 'hello' and open for editing in vim\n" \
+    "  new -e hello.c     create a default C template file and open for.\n"    \
+    "                     editing in vim.\n\n"                                 \
+    "Author:\n"                                                                \
+    "  Artyom Danilov\n\n"
+}
+
+# Returns 0 if $1 makefile type is in $MAKEFILE_TYPES
 makefile_supported()
 {
-    for lang in "${SUPPORTED_MAKEFILES[@]}"; do
-        [[ "$lang" == "$1" ]] && return 0
+    local type=$1
+
+    for make_type in "${MAKEFILE_TYPES[@]}"; do
+        if [[ "$make_type" == "$type" ]]; then
+            return 0
+        fi
     done
     return 1
 }
 
-# Copies $1 template from $TEMPLATES_DIR_NAME directory into $2 file
+# Copy $1 template from templates directory into $2 file.
 copy_template()
 {
-    local template="$TEMPLATES_DIR_NAME/$1"
+    local template="$TEMPLATES_DIR/$1"
     local file=$2
 
     # if file doesn't exist in pwd
-    if [[ ! -f $(pwd)/$file ]]; then
-        # if template doesnt exist
-        if [[ ! -f $template ]]; then
-            echo "Error: template not found '$template'" >&2
+    if [[ ! -f "$(pwd)/$file" ]]; then
+        # if template doesn't exist
+        if [[ ! -f "$template" ]]; then
+            echo "$SCRIPT_NAME: template not found '$template'" >&2
         else
             cp "$template" "$file"
         fi
     else
-
         if [[ ${FLAGS[force]} -eq 1 ]]; then
             cp "$template" "$file"
         else
-            echo "Warning: file already exists '$file'"
-            read -rep "Rewrite ? [y/n]: " ans
+            echo "$SCRIPT_NAME: file already exists '$file'"
+            read -rep 'Rewrite ? [y/n]: ' ans
             [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$file"
         fi
-
     fi
 }
