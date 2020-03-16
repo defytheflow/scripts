@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usage()
+function usage()
 {
     printf "%b"                                                                \
     "Correct order of include directives in C/C++ source files.\n\n"           \
@@ -9,22 +9,21 @@ usage()
     "  include-order [options] <file>...\n\n"                                  \
                                                                                \
     "Arguments:\n"                                                             \
-    "  file                C/C++ source file.\n\n"                             \
+    "  file      C/C++ source file.\n\n"                                       \
                                                                                \
     "Options:\n"                                                               \
-    "  -h, --help          display this message.\n\n"                          \
-                                                                               \
-    "Author:\n"                                                                \
-    "  Artyom Danilov\n\n"
+    "  --help    display this message and exit.\n"
 }
 
 # ---------------------------------------------------------------------------- #
 #                               Global Variables                               #
 # ---------------------------------------------------------------------------- #
 
-SHORT_OPTS="h"
-LONG_OPTS="help"
-HLP_MSG="Try: 'include-order -h, --help' for more information"
+SCRIPT_NAME='include-order'
+
+SHORT_OPTS='h'
+LONG_OPTS='help'
+HELP="Try '$SCRIPT_NAME --help' for more information."
 
 INCLUDE_PATTERN="^\s*#include\s+[<\"]\w+\.h[>\"]\s*$"
 
@@ -33,7 +32,7 @@ LOCAL_INCLUDES=()         # array of "header.h"...
 SYSTEM_INCLUDES=()        # array of <stdlib.h>...
 THIRD_PARTY_INCLUDES=()   # array of <third_party.h>...
 
-THIRD_PARTY_INCLUDES_DIR=/usr/local/include
+THIRD_PARTY_INCLUDES_DIR='/usr/local/include'
 
 FILE_TOTAL_LINE_COUNT=0
 LAST_INCLUDE_LINE_NUM=0
@@ -45,7 +44,7 @@ LAST_INCLUDE_LINE_NUM=0
 ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echo "$HLP_MSG" >&2
+    echo "$HELP" >&2
     exit 1
 fi
 
@@ -57,7 +56,7 @@ eval set -- "$ARGV"
 
 while true; do
     case $1 in
-        -h | --help)
+        --help)
             usage
             exit 0 ;;
         --)
@@ -71,10 +70,10 @@ done
 #                                  Validation                                  #
 # ---------------------------------------------------------------------------- #
 
-# Check if <file argument was given.
-if [[ $# -lt 1 ]]; then
-    echo "Error: missing <file> argument" >&2
-    echo $HLP_MSG >&2
+# If no <file>:
+if [[ $# -eq 0 ]]; then
+    echo "$SCRIPT_NAME: missing <file> argument" >&2
+    echo $HELP >&2
     exit 1
 fi
 
@@ -82,16 +81,18 @@ fi
 #                                   Main Job                                   #
 # ---------------------------------------------------------------------------- #
 
+# For each <file>:
 for file in $@; do
 
-    # If file doesn't exist.
+    # If <file> doesn't exist"
     if [[ ! -f "$file" ]]; then
-        echo "Error: file '$file' does not exits"
+        echo "$SCRIPT_NAME: file '$file' does not exits"
         continue
     fi
 
     # Extract all #includes.
     mapfile ALL_INCLUDES < <(grep -nE "$INCLUDE_PATTERN" "$file")
+    # Remove '#include' words.
     ALL_INCLUDES=( "${ALL_INCLUDES[@]/\#include/}" )
 
     # If zero or only one include, just print the file the same.
@@ -157,12 +158,12 @@ for file in $@; do
 
     # If have third_party includes -> print
     if [[ ${#SORTED_THIRD_PARTY_INCLUDES[@]} -gt 0 ]]; then
-        printf '%s\n' "${SORTED_THIRD_PARTY_INCLUDES[@]}"; echo
+        printf '#include %s\n' "${SORTED_THIRD_PARTY_INCLUDES[@]}"; echo
     fi
 
     # If have system includes -> print
     if [[ ${#SORTED_SYSTEM_INCLUDES[@]} -gt 0 ]]; then
-        printf '%s\n' "${SORTED_SYSTEM_INCLUDES[@]}"; echo
+        printf '#include %s\n' "${SORTED_SYSTEM_INCLUDES[@]}"; echo
     fi
 
     tail -$(( FILE_TOTAL_LINE_COUNT - LAST_INCLUDE_LINE_NUM )) "$file"
