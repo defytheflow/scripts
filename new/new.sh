@@ -108,11 +108,16 @@ if [[ $# -gt 0 ]]; then
 
     done
 
-    # Open the first <file> for editing.
-    if [[ ${FLAGS[edit]} -eq 1 ]]; then
-        vim -c 'startinsert' "$1" "+${CURSOR_LINE_NUMBERS[$ext]}"
-    fi
+fi
 
+if [[ ${FLAGS[edit]} -eq 1 ]]; then
+    # Open one file for editing.
+    if [[ $# -eq 1 ]]; then
+        vim -c 'startinsert' "$1" "+${CURSOR_LINE_NUMBERS[$ext]}"
+    # Open multiple files for editing.
+    elif [[ $# -gt 1 ]]; then
+        vim -c 'startinsert' -O "$@" "+${CURSOR_LINE_NUMBERS[$ext]}"
+    fi
 fi
 
 exit 0
