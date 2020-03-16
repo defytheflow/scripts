@@ -11,19 +11,19 @@ if [[ ! -d "$TEMPLATES_DIR" ]]; then
     exit 1
 fi
 
-# '--edit' flag expects to find at least one <file>.
+# '--edit' flag expects to find at least one <filename>.
 if [[ ${FLAGS[edit]} -eq 1 ]]; then
-    # If no <file> arguments were given:
+    # If no <filename> arguments were given:
     if [[ $# -eq 0 ]]; then
-        echo "$SCRIPT_NAME: missing <file> argument" >&2
+        echo "$SCRIPT_NAME: missing <filename> argument" >&2
         echo "$HELP" >&2
         exit 1
     fi
 fi
 
-# '--make' option doesn't need a <file>, but can use it too.
+# '--make' option doesn't need a <filename>, but can use it too.
 if [[ -n ${OPTS[make]} ]]; then
-    # If no <file>s were given or <file> has an extension:
+    # If no <filename>s were given or <filename> has an extension:
     if [[ $# -eq 0 || "$1" =~ ^.+\..+$ ]]; then
         copy_template "makefiles/${OPTS[make]}" "$MAKEFILE_NAME"
     else
@@ -32,11 +32,11 @@ if [[ -n ${OPTS[make]} ]]; then
     fi
 fi
 
-# If '--make' option and '--edit' flag were not used, we need to check for a <file>.
+# If '--make' option and '--edit' flag were not used, we need to check for a <filename>.
 if [[ -z ${OPTS[make]} && ${FLAGS[edit]} -eq 0 ]]; then
-    # If no <file>s were given:
+    # If no <filename>s were given:
     if [[ $# -eq 0 ]]; then
-        echo "$SCRIPT_NAME: missing <file> argument" >&2
+        echo "$SCRIPT_NAME: missing <filename> argument" >&2
         echo "$HELP" >&2
         exit 1
     fi
@@ -44,28 +44,28 @@ fi
 
 # If  have files to create:
 if [[ $# -gt 0 ]]; then
-    # For each <file>:
-    for file in "$@"; do
+    # For each <filename>:
+    for filename in "$@"; do
 
-        ext=${file#${file%.*}}  # get file extension
-        ext=${ext:1}            # remove leading '.'
+        ext=${filename#${filename%.*}}  # get file extension
+        ext=${ext:1}                    # remove leading '.'
 
         case "$ext" in
             c | cpp | html | py)
-                copy_template "$ext"  "$file"  ;;
+                copy_template "$ext"  "$filename"  ;;
             *)
-                touch "$file"  ;;
+                touch "$filename"  ;;
         esac
     done
 fi
 
 # If '--edit' flag is on"
 if [[ ${FLAGS[edit]} -eq 1 ]]; then
-    # If only one <file>:
+    # If only one <filename>:
     if [[ $# -eq 1 ]]; then
         # Open one file for editing.
         vim -c 'startinsert' "$1" "+${CURSOR_LINE_NUMBERS[$ext]}"
-    # If more then one <file>:
+    # If more then one <filename>:
     elif [[ $# -gt 1 ]]; then
         # Open multiple files for editing in vertical split.
         vim -c 'startinsert' -O "$@" "+${CURSOR_LINE_NUMBERS[$ext]}"

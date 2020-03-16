@@ -7,13 +7,13 @@ function usage()
     "Create default templates for files.\n\n"                                  \
                                                                                \
     "Usage:\n"                                                                 \
-    "  new [options] <file>...\n\n"                                            \
+    "  new [options] <filename>...\n\n"                                        \
                                                                                \
     "Arguments:\n"                                                             \
-    "  file               name of the file to create.\n\n"                     \
+    "  filename               name of the file to create.\n\n"                 \
                                                                                \
     "Options:\n"                                                               \
-    "  -e, --edit         open <file>s for editing in vim.\n"                  \
+    "  -e, --edit         open <filename>s for editing in vim.\n"              \
     "  -f, --force        disable warnings.\n"                                 \
     "      --help         display this message and exit.\n"                    \
     "  -m, --make=TYPE    create a default makefile of TYPE; TYPE can be\n"    \
@@ -46,23 +46,23 @@ function makefile_supported()
 function copy_template()
 {
     local template="$TEMPLATES_DIR/$1"
-    local file=$2
+    local filename=$2
 
-    # if file doesn't exist in pwd
-    if [[ ! -f "$(pwd)/$file" ]]; then
+    # if filename doesn't exist in pwd
+    if [[ ! -f "$(pwd)/$filename" ]]; then
         # if template doesn't exist
         if [[ ! -f "$template" ]]; then
             echo "$SCRIPT_NAME: template not found '$template'" >&2
         else
-            cp "$template" "$file"
+            cp "$template" "$filename"
         fi
     else
         if [[ ${FLAGS[force]} -eq 1 ]]; then
-            cp "$template" "$file"
+            cp "$template" "$filename"
         else
-            echo "$SCRIPT_NAME: file already exists '$file'"
+            echo "$SCRIPT_NAME: file '$filename' already exists"
             read -rep 'Rewrite ? [y/n]: ' ans
-            [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$file"
+            [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$filename"
         fi
     fi
 }

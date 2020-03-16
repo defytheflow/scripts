@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Absolute import
+. $(dirname $(realpath $0))/helpers.sh
+
 SCRIPT_NAME='new'  # used in error messages
 
 SHORT_OPTS='efm:'
@@ -40,9 +43,6 @@ if [[ $? -ne 0 ]]; then
 fi
 
 eval set -- "$ARGV"
-
-# Absolute import helpers.sh
-. $(dirname $(realpath $0))/helpers.sh
 
 while true; do
     case $1 in
