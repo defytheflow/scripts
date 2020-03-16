@@ -1,23 +1,30 @@
 #!/bin/bash
 
-SHORT_OPTS=":bfhnsx"
-HELP_MSG="Try: 'clean -h' for more information"
+# Absolute import
+. $(dirname $(realpath $0))/helpers.sh
 
-TRASH=()
+SCRIPT_NAME='clean'
 
+SHORT_OPTS='efnsx'
+LONG_OPTS='elf,force,help,no-exe,script,exe'
+HELP="Try '$SCRIPT_NAME --help' for more information."
+
+TRASH=()  # for files to be removed.
+
+# Each flag is either ON (1) or OFF (0).
 declare -A FLAGS=(
-    [exec]=0     # -x
-    [bin]=0      # -b
+    [elf]=0      # -e, --elf
     [default]=1
-    [force]=0    # -f
-    [no_exec]=0  # -n
-    [script]=0   # -s
+    [force]=0    # -f, --force
+    [no-exe]=0   # -n, --no-exe
+    [script]=0   # -s, --script
+    [exe]=0      # -x, --exe
 )
 
-ARGV=$(getopt -o $SHORT_OPTS -- "$@")
+ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echo "$HELP_MSG" >&2
+    echo "$HELP" >&2
     exit 1
 fi
 
@@ -25,31 +32,37 @@ eval set -- "$ARGV"
 
 while true; do
     case $1 in
-        -b)
+        -e | --elf)
             FLAGS[default]=0
-            FLAGS[bin]=1   ;;
-        -f)
+            FLAGS[elf]=1
+            ;;
+        -f | --force)
             FLAGS[force]=1 ;;
-        -h)
+        --help)
             usage
-            exit 0 ;;
-        -n)
+            exit 0
+            ;;
+        -n | --no-exe)
             FLAGS[default]=0
-            FLAGS[no_exec]=1 ;;
-        -s)
+            FLAGS[no-exe]=1
+            ;;
+        -s | --script)
             FLAGS[default]=0
-            FLAGS[script]=1 ;;
-        -x)
+            FLAGS[script]=1
+            ;;
+        -x | --exe)
             FLAGS[default]=0
-            FLAGS[exec]=1   ;;
+            FLAGS[exe]=1
+            ;;
         --)
             shift
-            break           ;;
+            break
+            ;;
     esac
     shift
 done
 
+# Default settings.
 if [[ ${FLAGS[default]} -eq 1 ]]; then
-    FLAGS[bin]=1
+    FLAGS[elf]=1
 fi
-

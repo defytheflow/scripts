@@ -1,138 +1,95 @@
 #!/bin/bash
 
-usage()
-{
-    printf "%b"                                                                \
-    "Removes certain types of files from directory.\n\n"                       \
-                                                                               \
-    "Usage:\n"                                                                 \
-    "  clean [options] <dir>...\n\n"                                           \
-                                                                               \
-    "Arguments:\n"                                                             \
-    "  dir           name of the directory\n\n"                                \
-                                                                               \
-    "Options:\n"                                                               \
-    "  -b            remove ELF files           (default)\n"                   \
-    "  -f            remove without prompt.\n"                                 \
-    "  -h            display this message.\n"                                  \
-    "  -n            remove non-executable files.\n"                           \
-    "  -s            remove script files.\n"                                   \
-    "  -x            remove executable files.\n\n"                             \
-                                                                               \
-    "Examples:\n"                                                              \
-    "  clean         remove all ELFs from cwd\n"                               \
-    "  clean -b      remove all ELFS from cwd\n"                               \
-    "  clean -s      remove all scripts from cwd\n"                            \
-    "  clean -x      remove all executable files from cwd\n"                   \
-    "  clean -n      remove all non-executable files from cwd\n"               \
-    "  clean -xs     remove all executable scripts from cwd\n"                 \
-    "  clean -xb     remove all executable ELFS from cwd\n"                    \
-    "  clean -bs     remove all ELFS and scripts from cwd\n"                   \
-    "  clean -nb     remove non-executable ELFS from cwd\n"                    \
-    "  clean -ns     remove non-executable scripts from cwd\n\n"               \
-                                                                               \
-    "Author:\n"                                                                \
-    "  Artyom Danilov\n\n"
-}
-
-# Absolute import
+# Absolute imports
 . $(dirname $(realpath $0))/settings.sh
+. $(dirname $(realpath $0))/helpers.sh
 
 # Based on set FLAGS collect files to TRASH array.
-collect_trash()
+function collect_trash()
 {
     local dir=$1
-    if [[ ${FLAGS[bin]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir "script" ""
-        files_to_trash $dir "ELF" ""
-    elif [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir "script" "x"
-    elif [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[bin]} -eq 1 ]]; then
-        files_to_trash $dir "ELF" "x"
-    elif [[ ${FLAGS[no_exec]} -eq 1 && ${FLAGS[bin]} -eq 1 ]]; then
-        files_to_trash $dir "ELF" "n"
-    elif [[ ${FLAGS[no_exec]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir "script" "n"
+
+    if [[ ${FLAGS[elf]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir '' 'ELF'
+        files_to_trash $dir '' 'script'
+
+    elif [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir 'exe' 'script'
+
+    elif [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[elf]} -eq 1 ]]; then
+        files_to_trash $dir 'exe' 'ELF'
+
+    elif [[ ${FLAGS[no-exe]} -eq 1 && ${FLAGS[elf]} -eq 1 ]]; then
+        files_to_trash $dir 'no-exe' 'ELF'
+
+    elif [[ ${FLAGS[no-exe]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
+        files_to_trash $dir 'no-exe' 'script'
+
     elif [[ ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir "script"
+        files_to_trash $dir '' 'script'
+
     elif [[ ${FLAGS[bin]} -eq 1 ]]; then
-        files_to_trash $dir "ELF"
-    elif [[ ${FLAGS[exec]} -eq 1 ]]; then
-        files_to_trash $dir "" "x"
-    elif [[ ${FLAGS[no_exec]} -eq 1 ]]; then
-        files_to_trash $dir "" "n"
+        files_to_trash $dir '' 'ELF'
+
+    elif [[ ${FLAGS[exe]} -eq 1 ]]; then
+        files_to_trash $dir 'exe' ''
+
+    elif [[ ${FLAGS[no-exe]} -eq 1 ]]; then
+        files_to_trash $dir 'no-exe' ''
     fi
 }
 
-# Fill TRASH array with files from dir based on their type and mode.
-files_to_trash()
+# Fill TRASH array with files from $1 'dir' based on their $2 'mode' and $3 'type'.
+function files_to_trash()
 {
     local dir=$1
-    local type=$2
-    local mode=$3  # x - executable, n - not executable
+    local mode=$2  # 'exe' - executable, 'no-exe' - not executable
+    local type=$3  # ELF, script
 
     for file in $(ls $dir); do
         local full_file="$dir/$file"
-        if [[ $mode == "x" && -n $type ]]; then
+
+        if [[ $mode == 'exe' && -n $type ]]; then
             [[ -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
-        elif [[ $mode == "n" && -n $type ]]; then
+
+        elif [[ $mode == 'no-exe' && -n $type ]]; then
             [[ ! -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
+
         elif [[ -n $type ]]; then
             [[ $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
-        elif [[ $mode == "x" ]]; then
+
+        elif [[ $mode == 'exe' ]]; then
             [[ -x "$full_file" ]] && TRASH+=("$full_file")
-        elif [[ $mode == "n" ]]; then
+
+        elif [[ $mode == 'no-exe' ]]; then
             [[ ! -x "$full_file" ]] && TRASH+=("$full_file")
         fi
-
     done
 }
 
-remove_trash()
-{
-    if [[ ${FLAGS[force]} -eq 1 ]]; then
-        remove_files "${TRASH[@]}"
-    else
-        for file in "${TRASH[@]}"; do
-            echo "'$file'"
-        done
-
-        if [[ ${#TRASH[@]} -eq 1 ]]; then
-            echo -n "Remove this file? [y/n]: "
-        else
-            echo -n "Remove these files? [y/n]: "
-        fi
-
-        read -re ans
-        [[ "$ans" =~ ^[yY]$ ]] && remove_files "${TRASH[@]}"
-    fi
-
-}
-
-remove_files()
-{
-    for file in "$@"; do
-        rm "$file"
-    done
-}
-
-# -n and -x are conflicting options
-if [[ ${FLAGS[exec]} -eq 1 && ${FLAGS[no_exec]} -eq 1 ]]; then
-    echo "Error: conflicting options '-x' and '-n'" >&2
-    echo $HELP_MSG >&2
+# '--no-exe' and '--exe' are conflicting options
+if [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[no-exe]} -eq 1 ]]; then
+    echo "$SCRIPT_NAME: conflicting options '--exe' and '--no-exe'" >&2
+    echo $HELP >&2
     exit 1
 fi
 
-# If no <dir> arguments were given
+# If no <dir>s were given:
 if [[ $# -eq 0 ]]; then
-    collect_trash .
+    collect_trash '.'
 else
+    # For each <dir>:
     for dir in "$@"; do
-            [[ -d "$dir" ]] && collect_trash "$dir"
+            # If <dir exists:
+            if [[ -d "$dir" ]]; then
+                collect_trash "$dir"
+            fi
     done
 fi
 
-# If collected any trash ->
-[[ ${#TRASH[@]} -gt 0 ]] && remove_trash
+# If collected trash:
+if [[ ${#TRASH[@]} -gt 0 ]]; then
+    remove_trash
+fi
 
 exit 0
