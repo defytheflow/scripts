@@ -10,7 +10,7 @@ function usage()
     "  new [options] <filename>...\n\n"                                        \
                                                                                \
     "Arguments:\n"                                                             \
-    "  filename               name of the file to create.\n\n"                 \
+    "  filename           name of the file to create.\n\n"                     \
                                                                                \
     "Options:\n"                                                               \
     "  -e, --edit         open <filename>s for editing in vim.\n"              \
@@ -23,10 +23,8 @@ function usage()
     "  new hello          create a file 'hello'.\n"                            \
     "  new hello.c        create a default C template.\n"                      \
     "  new -e hello       create a file 'hello' and open for editing in vim\n" \
-    "  new -e hello.c     create a default C template file and open for.\n"    \
-    "                     editing in vim.\n\n"                                 \
-    "Author:\n"                                                                \
-    "  Artyom Danilov\n\n"
+    "  new -e hello.c     create a default C template file and open for\n"     \
+    "                     editing in vim.\n"
 }
 
 # Returns 0 if $1 makefile type is in $MAKEFILE_TYPES

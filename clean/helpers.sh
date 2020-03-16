@@ -10,7 +10,7 @@ function usage()
     "  clean [options] <dirname>...\n\n"                                       \
                                                                                \
     "Arguments:\n"                                                             \
-    "  dirname             name of the directory.\n\n"                         \
+    "  dirname         name of the directory.\n\n"                             \
                                                                                \
     "Options:\n"                                                               \
     "  -e, --elf       remove ELF files (default).\n"                          \
@@ -21,16 +21,16 @@ function usage()
     "  -x, --exe       remove executable files.\n\n"                           \
                                                                                \
     "Examples:\n"                                                              \
-    "  clean         remove all ELFs from cwd\n"                               \
-    "  clean -e      remove all ELFS from cwd\n"                               \
-    "  clean -s      remove all scripts from cwd\n"                            \
-    "  clean -x      remove all executable files from cwd\n"                   \
-    "  clean -n      remove all non-executable files from cwd\n"               \
-    "  clean -xs     remove all executable scripts from cwd\n"                 \
-    "  clean -xe     remove all executable ELFS from cwd\n"                    \
-    "  clean -es     remove all ELFS and scripts from cwd\n"                   \
-    "  clean -ne     remove non-executable ELFS from cwd\n"                    \
-    "  clean -ns     remove non-executable scripts from cwd\n\n"
+    "  clean           remove all ELFs from cwd\n"                             \
+    "  clean -e        remove all ELFS from cwd\n"                             \
+    "  clean -s        remove all scripts from cwd\n"                          \
+    "  clean -x        remove all executable files from cwd\n"                 \
+    "  clean -n        remove all non-executable files from cwd\n"             \
+    "  clean -xs       remove all executable scripts from cwd\n"               \
+    "  clean -xe       remove all executable ELFS from cwd\n"                  \
+    "  clean -es       remove all ELFS and scripts from cwd\n"                 \
+    "  clean -ne       remove non-executable ELFS from cwd\n"                  \
+    "  clean -ns       remove non-executable scripts from cwd\n"
 }
 
 # Display files in TRASH array and prompt to remove them.
