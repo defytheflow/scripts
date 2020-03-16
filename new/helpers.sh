@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Display usage message.
-usage()
+function usage()
 {
     printf "%b"                                                                \
     "Create default templates for files.\n\n"                                  \
@@ -30,7 +30,7 @@ usage()
 }
 
 # Returns 0 if $1 makefile type is in $MAKEFILE_TYPES
-makefile_supported()
+function makefile_supported()
 {
     local type=$1
 
@@ -43,7 +43,7 @@ makefile_supported()
 }
 
 # Copy $1 template from templates directory into $2 file.
-copy_template()
+function copy_template()
 {
     local template="$TEMPLATES_DIR/$1"
     local file=$2
