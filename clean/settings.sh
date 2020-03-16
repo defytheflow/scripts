@@ -23,6 +23,7 @@ declare -A FLAGS=(
 
 ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
+# If error ocuured during parsing in getopt.
 if [[ $? -ne 0 ]]; then
     echo "$HELP" >&2
     exit 1

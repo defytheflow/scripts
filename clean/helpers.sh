@@ -7,10 +7,10 @@ function usage()
     "Remove certain types of files from directories.\n\n"                      \
                                                                                \
     "Usage:\n"                                                                 \
-    "  clean [options] <dir>...\n\n"                                           \
+    "  clean [options] <dirname>...\n\n"                                       \
                                                                                \
     "Arguments:\n"                                                             \
-    "  dir             name of the directory.\n\n"                             \
+    "  dirname             name of the directory.\n\n"                         \
                                                                                \
     "Options:\n"                                                               \
     "  -e, --elf       remove ELF files (default).\n"                          \

@@ -7,47 +7,47 @@
 # Based on set FLAGS collect files to TRASH array.
 function collect_trash()
 {
-    local dir=$1
+    local dirname=$1
 
     if [[ ${FLAGS[elf]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir '' 'ELF'
-        files_to_trash $dir '' 'script'
+        files_to_trash "$dirname" '' 'ELF'
+        files_to_trash "$dirname" '' 'script'
 
     elif [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir 'exe' 'script'
+        files_to_trash "$dirname" 'exe' 'script'
 
     elif [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[elf]} -eq 1 ]]; then
-        files_to_trash $dir 'exe' 'ELF'
+        files_to_trash "$dirname" 'exe' 'ELF'
 
     elif [[ ${FLAGS[no-exe]} -eq 1 && ${FLAGS[elf]} -eq 1 ]]; then
-        files_to_trash $dir 'no-exe' 'ELF'
+        files_to_trash "$dirname" 'no-exe' 'ELF'
 
     elif [[ ${FLAGS[no-exe]} -eq 1 && ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir 'no-exe' 'script'
+        files_to_trash "$dirname" 'no-exe' 'script'
 
     elif [[ ${FLAGS[script]} -eq 1 ]]; then
-        files_to_trash $dir '' 'script'
+        files_to_trash "$dirname" '' 'script'
 
     elif [[ ${FLAGS[bin]} -eq 1 ]]; then
-        files_to_trash $dir '' 'ELF'
+        files_to_trash "$dirname" '' 'ELF'
 
     elif [[ ${FLAGS[exe]} -eq 1 ]]; then
-        files_to_trash $dir 'exe' ''
+        files_to_trash "$dirname" 'exe' ''
 
     elif [[ ${FLAGS[no-exe]} -eq 1 ]]; then
-        files_to_trash $dir 'no-exe' ''
+        files_to_trash "$dirname" 'no-exe' ''
     fi
 }
 
-# Fill TRASH array with files from $1 'dir' based on their $2 'mode' and $3 'type'.
+# Fill TRASH array with files from $1 'dirname' based on their $2 'mode' and $3 'type'.
 function files_to_trash()
 {
-    local dir=$1
+    local dirname=$1
     local mode=$2  # 'exe' - executable, 'no-exe' - not executable
     local type=$3  # ELF, script
 
-    for file in $(ls $dir); do
-        local full_file="$dir/$file"
+    for file in $(ls $dirname); do
+        local full_file="$dirname/$file"
 
         if [[ $mode == 'exe' && -n $type ]]; then
             [[ -x $full_file && $(file $full_file) =~ "$type" ]] && TRASH+=("$full_file")
@@ -74,13 +74,13 @@ if [[ ${FLAGS[exe]} -eq 1 && ${FLAGS[no-exe]} -eq 1 ]]; then
     exit 1
 fi
 
-# If no <dir>s were given:
+# If no <dirname>s were given:
 if [[ $# -eq 0 ]]; then
     collect_trash '.'
 else
-    # For each <dir>:
+    # For each <dirname>:
     for dir in "$@"; do
-            # If <dir exists:
+            # If <dirname> exists:
             if [[ -d "$dir" ]]; then
                 collect_trash "$dir"
             fi
