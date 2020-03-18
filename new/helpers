@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Display usage message.
-function usage()
+usage()
 {
     printf "%b"                                                                \
     "Create default templates for files.\n\n"                                  \
                                                                                \
     "Usage:\n"                                                                 \
-    "  new [options] <filename>...\n\n"                                        \
+    "  new [option]... <filename>...\n\n"                                      \
                                                                                \
     "Arguments:\n"                                                             \
     "  filename           name of the file to create.\n\n"                     \
@@ -27,40 +27,44 @@ function usage()
     "                     editing in vim.\n"
 }
 
-# Returns 0 if $1 makefile type is in $MAKEFILE_TYPES
-function makefile_supported()
+# Returns 0 if $1 makefile type is in $MAKEFILE_TYPES.
+makefile_supported()
 {
-    local type=$1
+    local type="$1"
 
     for make_type in "${MAKEFILE_TYPES[@]}"; do
-        if [[ "$make_type" == "$type" ]]; then
+        if [ "${make_type}" = "${type}" ]; then
             return 0
         fi
     done
+
     return 1
 }
 
 # Copy $1 template from templates directory into $2 file.
-function copy_template()
+copy_template()
 {
-    local template="$TEMPLATES_DIR/$1"
-    local filename=$2
+    local template="${TEMPLATES}/$1"
+    local filename="$2"
 
     # if filename doesn't exist in pwd
-    if [[ ! -f "$(pwd)/$filename" ]]; then
+    if [ ! -f "$(pwd)/${filename}" ]; then
         # if template doesn't exist
-        if [[ ! -f "$template" ]]; then
-            echo "$SCRIPT_NAME: template not found '$template'" >&2
+        if [ ! -f "${template}" ]; then
+            echo "${SCRIPT}: template not found '${template}'" >&2
         else
-            cp "$template" "$filename"
+            cp "${template}" "${filename}"
         fi
     else
-        if [[ ${FLAGS[force]} -eq 1 ]]; then
-            cp "$template" "$filename"
+        if [ "${FLAGS[force]}" = 'true' ]; then
+            cp "${template}" "${filename}"
         else
-            echo "$SCRIPT_NAME: file '$filename' already exists"
-            read -rep 'Rewrite ? [y/n]: ' ans
-            [[ "$ans" =~ ^[yY]$ ]] && cp "$template" "$filename"
+            printf "%b" \
+            "${SCRIPT}: file '${filename}' already exists\nRewrite? [y/n]: "
+            read -r ans
+            if [ "${ans}" = 'y' ] || [ "${ans}" = 'Y' ]; then
+                cp "${template}" "${filename}"
+            fi
         fi
     fi
 }
