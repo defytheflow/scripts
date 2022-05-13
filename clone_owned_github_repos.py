@@ -8,10 +8,8 @@ from requests.auth import HTTPBasicAuth
 
 def main() -> None:
     repos = get_owned_repos()
-    urls = [repo['ssh_url'] for repo in repos]
-
-    for i, url in enumerate(urls):
-        command = f'git clone {url}'
+    for i, repo in enumerate(repos):
+        command = f'git clone {repo["ssh_url"]}'
         print(f'{i + 1}. Executing: "{command}"')
         os.system(command)
         print()
