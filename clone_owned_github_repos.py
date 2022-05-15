@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# File:     clone_owned_github_repos.py
+# Created:  10.05.22
+# Author:   Artyom Danilov (@defytheflow)
+
 import os
 
 import requests
