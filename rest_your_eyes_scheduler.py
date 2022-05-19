@@ -77,4 +77,7 @@ def display_notification(title: str, body: str) -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info('rest_your_eyes_scheduler stopped')
