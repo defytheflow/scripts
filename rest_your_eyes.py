@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:     rest_your_eyes_scheduler.py
+# File:     rest_your_eyes.py
 # Created:  15.05.22
 # Author:   Artyom Danilov (@defytheflow)
 
@@ -26,8 +26,8 @@ def main() -> None:
         level=logging.INFO,
         format='%(levelname)s: [%(asctime)s] - %(message)s',
     )
-    set_terminal_title('Rest your eyes scheduler 👀 ')
-    logging.info('rest_your_eyes_scheduler started')
+    set_terminal_title('Rest your eyes 👀 ')
+    logging.info('rest_your_eyes started')
     scheduler.enter(SHORT_PERIOD_SECONDS, 1, display_short_period_notification)
     scheduler.enter(LONG_PERIOD_SECONDS, 1, display_long_period_notification)
     scheduler.run()
@@ -80,4 +80,4 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        logging.info('rest_your_eyes_scheduler stopped')
+        logging.info('rest_your_eyes stopped')
